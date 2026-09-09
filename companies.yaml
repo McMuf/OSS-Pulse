@@ -1,0 +1,80 @@
+# OSS Pulse — company / repo universe (v1)
+# Curated mapping of tracked companies to the GitHub repos that stand in
+# for their engineering health, plus a confidence tier per the spec.
+#
+# tier: 1 = open-core company where the repo IS the shipped product (cleanest signal)
+#       2 = flagship OSS project as a proxy for a much larger company (noisier)
+
+companies:
+  - ticker: MDB
+    name: MongoDB
+    tier: 1
+    repos:
+      - mongodb/mongo
+
+  - ticker: ESTC
+    name: Elastic
+    tier: 1
+    repos:
+      - elastic/elasticsearch
+
+  - ticker: GTLB
+    name: GitLab
+    tier: 1
+    repos:
+      - gitlab-org/gitlab
+
+  - ticker: CFLT
+    name: Confluent
+    tier: 1
+    caveat: "Confluent is a steward/major contributor to Kafka, not the sole owner"
+    repos:
+      - apache/kafka
+
+  - ticker: HCP
+    name: HashiCorp
+    tier: 1
+    repos:
+      - hashicorp/terraform
+      - hashicorp/vault
+
+  - ticker: NET
+    name: Cloudflare
+    tier: 1
+    caveat: "Weaker single-repo mapping — several OSS tools, no single flagship product repo"
+    repos:
+      - cloudflare/workerd
+
+  - ticker: FROG
+    name: JFrog
+    tier: 1
+    repos:
+      - jfrog/jfrog-cli
+
+  - ticker: BASE
+    name: Couchbase
+    tier: 1
+    repos:
+      - couchbase/couchbase-lite-core
+
+  - ticker: META
+    name: Meta
+    tier: 2
+    repos:
+      - facebook/react
+      - pytorch/pytorch
+
+  - ticker: GOOGL
+    name: Google
+    tier: 2
+    repos:
+      - kubernetes/kubernetes
+      - tensorflow/tensorflow
+      - angular/angular
+
+  - ticker: MSFT
+    name: Microsoft
+    tier: 2
+    repos:
+      - microsoft/vscode
+      - microsoft/TypeScript
