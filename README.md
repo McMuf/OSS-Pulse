@@ -20,13 +20,34 @@ commit before moving to the next.
 - [x] Stage 1 — repo scaffold, companies.yaml, backend/frontend skeletons
 - [x] Stage 2 — GitHub API ingestion (commit/contributor/release data) → DuckDB
 - [x] Stage 3 — GitHub Actions scheduled ingestion (moved up so data keeps refreshing on its own)
-- [ ] Stage 4 — FastAPI backend serving `/companies`, `/companies/{ticker}` from real data + composite score
+- [x] Stage 4 — FastAPI backend serving `/companies`, `/companies/{ticker}` from real data + composite score
 - [ ] Stage 5 — Next.js dark-mode leaderboard page
 - [ ] Stage 6 — Company detail page (health score vs. stock price chart)
 - [ ] Stage 7 — yfinance price data + backtest (correlation, event study)
 - [ ] Stage 8 — Methodology + About/disclaimer pages
 - [ ] Stretch — BigQuery/GH Archive Phase 0 replication, dbt, Tier 2 confidence badges
 - [ ] Stretch — GitLab API ingestion (GitLab has no actively-maintained repo on GitHub; dropped from `companies.yaml` for now, see note below)
+
+## Composite OSS Health Score
+
+Computed live per request in `backend/src/oss_pulse/scoring/composite.py` from
+whatever's in DuckDB — no separate batch scoring job yet. Six sub-metrics per
+the spec, each 0-100 or `None` when there isn't enough history to compute it:
+
+| Sub-metric | Base weight | Needs |
+|---|---|---|
+| Commit velocity trend | 35% | 8+ weeks of commit data (available now) |
+| Contributor breadth | 25% | current contributor count (available now) |
+| Release cadence | 20% | 2+ releases (unavailable for repos not using GitHub Releases, e.g. mongo, kafka) |
+| Contributor retention | 10% | 2+ ingestion snapshots over time |
+| Star/fork growth | 5% | 2+ ingestion snapshots over time |
+| Issue backlog change | 5% | 2+ ingestion snapshots over time |
+
+Missing sub-metrics are dropped and the remaining weights renormalized to
+100% — not filled with a fake neutral value. As the Stage 3 daily cron
+accumulates snapshots, the last three metrics phase in automatically.
+A company with multiple repos (e.g. HashiCorp) gets the plain average of
+its repos' composite scores.
 
 ## Scheduled ingestion
 
