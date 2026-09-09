@@ -18,14 +18,23 @@ Early scaffold. Following the staged build order below — each stage ends with 
 commit before moving to the next.
 
 - [x] Stage 1 — repo scaffold, companies.yaml, backend/frontend skeletons
-- [ ] Stage 2 — GitHub API ingestion (commit/contributor/release data) → DuckDB
-- [ ] Stage 3 — FastAPI backend serving `/companies`, `/companies/{ticker}`
-- [ ] Stage 4 — Next.js dark-mode leaderboard page
-- [ ] Stage 5 — Company detail page (health score vs. stock price chart)
-- [ ] Stage 6 — yfinance price data + backtest (correlation, event study)
-- [ ] Stage 7 — Methodology + About/disclaimer pages
-- [ ] Stage 8 — GitHub Actions scheduled ingestion
+- [x] Stage 2 — GitHub API ingestion (commit/contributor/release data) → DuckDB
+- [ ] Stage 3 — GitHub Actions scheduled ingestion (moved up so data keeps refreshing on its own)
+- [ ] Stage 4 — FastAPI backend serving `/companies`, `/companies/{ticker}` from real data + composite score
+- [ ] Stage 5 — Next.js dark-mode leaderboard page
+- [ ] Stage 6 — Company detail page (health score vs. stock price chart)
+- [ ] Stage 7 — yfinance price data + backtest (correlation, event study)
+- [ ] Stage 8 — Methodology + About/disclaimer pages
 - [ ] Stretch — BigQuery/GH Archive Phase 0 replication, dbt, Tier 2 confidence badges
+- [ ] Stretch — GitLab API ingestion (GitLab has no actively-maintained repo on GitHub; dropped from `companies.yaml` for now, see note below)
+
+## Known gaps
+
+- **GitLab (GTLB)** is in the spec's Tier 1 list but isn't currently tracked. GitLab
+  develops on gitlab.com, not GitHub — `gitlab-org/gitlab` and every `gitlab-runner`
+  mirror on GitHub are stale, years-old snapshots with no real activity. Re-adding
+  GitLab would mean a small second ingestion client against GitLab's own REST API,
+  not a GitHub repo swap.
 
 ## Project layout
 
@@ -47,6 +56,14 @@ pip install -r requirements.txt
 Copy `.env.example` to `.env` at the repo root and fill in `GITHUB_TOKEN`
 (see the PAT generation steps in the project notes — fine-grained token,
 "Public Repositories (read-only)" scope).
+
+Run ingestion to pull fresh GitHub data into DuckDB (`backend/data/oss_pulse.duckdb`,
+gitignored — rebuilt from source each run, not a checked-in artifact):
+
+```powershell
+$env:PYTHONPATH="src"
+.venv\Scripts\python.exe -m oss_pulse.ingestion.run
+```
 
 ## Frontend setup
 

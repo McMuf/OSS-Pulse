@@ -23,6 +23,8 @@ frontend/.next/
 frontend/out/
 frontend/.turbo/
 frontend/next-env.d.ts
+frontend/CLAUDE.md
+frontend/AGENTS.md
 
 # --- dev server logs ---
 *_out.log

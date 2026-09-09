@@ -18,12 +18,6 @@ companies:
     repos:
       - elastic/elasticsearch
 
-  - ticker: GTLB
-    name: GitLab
-    tier: 1
-    repos:
-      - gitlab-org/gitlab
-
   - ticker: CFLT
     name: Confluent
     tier: 1
