@@ -4,6 +4,8 @@ export type CompanySummary = {
   tier: number;
   repos: string[];
   caveat: string | null;
+  delisted: boolean;
+  delisted_note: string | null;
   score: number | null;
   trend_30d: number | null;
 };
@@ -31,9 +33,46 @@ export type CompanyDetail = {
   tier: number;
   repos: string[];
   caveat: string | null;
+  delisted: boolean;
+  delisted_note: string | null;
   score: number | null;
   repo_breakdown: RepoBreakdown[];
   score_history: unknown[];
+};
+
+export type LagWindowResult = {
+  n: number;
+  correlation: number | null;
+};
+
+export type EventStudy = {
+  threshold: number;
+  n_events: number;
+  avg_forward_return_after_drop: number | null;
+  avg_forward_return_baseline: number;
+  n_baseline: number;
+};
+
+export type WeeklyScorePoint = { week: string; score: number };
+export type PricePoint = { date: string; close: number };
+
+export type BacktestResult =
+  | { ticker: string; applicable: false; reason: string }
+  | {
+      ticker: string;
+      applicable: true;
+      metric: string;
+      weekly_points: number;
+      weekly_scores: WeeklyScorePoint[];
+      price_history: PricePoint[];
+      lag_windows: Record<string, LagWindowResult>;
+      event_study: EventStudy | null;
+    };
+
+export const LAG_WINDOW_LABELS: Record<string, string> = {
+  "1_week": "1 week",
+  "1_month": "1 month",
+  "1_quarter": "1 quarter",
 };
 
 export const SUB_METRIC_LABELS: Record<keyof SubScores, string> = {

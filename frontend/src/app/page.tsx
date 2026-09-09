@@ -109,6 +109,11 @@ export default async function Home() {
                   >
                     Tier {c.tier}
                   </span>
+                  {c.delisted && (
+                    <span className="text-xs rounded-full border border-border/60 px-2 py-0.5 shrink-0 text-foreground-muted/70">
+                      Acquired / delisted
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-foreground-muted mt-1 truncate">
                   {c.repos.join(", ")}

@@ -22,12 +22,16 @@ companies:
     name: Confluent
     tier: 1
     caveat: "Confluent is a steward/major contributor to Kafka, not the sole owner"
+    delisted: true
+    delisted_note: "Acquired by IBM for $31/share, delisted from Nasdaq March 2026"
     repos:
       - apache/kafka
 
   - ticker: HCP
     name: HashiCorp
     tier: 1
+    delisted: true
+    delisted_note: "Acquired by IBM for $35/share, delisted from Nasdaq February 2025"
     repos:
       - hashicorp/terraform
       - hashicorp/vault
@@ -48,6 +52,8 @@ companies:
   - ticker: BASE
     name: Couchbase
     tier: 1
+    delisted: true
+    delisted_note: "Acquired by Haveli Investments for $24.50/share, delisted from Nasdaq 2025"
     repos:
       - couchbase/couchbase-lite-core
 

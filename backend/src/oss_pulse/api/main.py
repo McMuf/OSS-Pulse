@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from oss_pulse.config import Company, load_companies
+from oss_pulse.scoring.backtest import compute_backtest
 from oss_pulse.scoring.composite import compute_company_score, compute_repo_scores
 from oss_pulse.storage.db import get_connection
 
@@ -48,6 +49,8 @@ def list_companies() -> list[dict]:
             "tier": c.tier,
             "repos": c.repos,
             "caveat": c.caveat,
+            "delisted": c.delisted,
+            "delisted_note": c.delisted_note,
             "score": compute_company_score([repo_scores[r] for r in c.repos if r in repo_scores]),
             "trend_30d": None,  # needs historical composite scores, not just historical raw metrics
         }
@@ -80,6 +83,8 @@ def get_company(ticker: str) -> dict:
         "tier": company.tier,
         "repos": company.repos,
         "caveat": company.caveat,
+        "delisted": company.delisted,
+        "delisted_note": company.delisted_note,
         "score": compute_company_score(repo_breakdown),
         "repo_breakdown": [
             {
@@ -92,4 +97,55 @@ def get_company(ticker: str) -> dict:
             for rs in repo_breakdown
         ],
         "score_history": [],  # Stage 6/7: needs scores persisted over time, not just live-computed
+    }
+
+
+@app.get("/companies/{ticker}/backtest")
+def get_backtest(ticker: str) -> dict:
+    companies = {c.ticker: c for c in load_companies()}
+    company = companies.get(ticker.upper())
+    if company is None:
+        raise HTTPException(status_code=404, detail=f"Unknown ticker: {ticker}")
+
+    if company.delisted:
+        return {
+            "ticker": company.ticker,
+            "applicable": False,
+            "reason": company.delisted_note or "Company is no longer publicly traded.",
+        }
+
+    con = get_connection()
+    try:
+        result = compute_backtest(con, company.ticker, company.repos)
+        price_rows = con.execute(
+            "SELECT date, close FROM stock_price WHERE ticker = ? ORDER BY date",
+            [company.ticker],
+        ).fetchall()
+    finally:
+        con.close()
+
+    return {
+        "ticker": company.ticker,
+        "applicable": True,
+        "metric": result.metric,
+        "weekly_points": result.weekly_points,
+        "weekly_scores": [
+            {"week": week.isoformat(), "score": score} for week, score in result.weekly_scores
+        ],
+        "price_history": [{"date": d.isoformat(), "close": c} for d, c in price_rows],
+        "lag_windows": {
+            label: {"n": lag.n, "correlation": lag.correlation}
+            for label, lag in result.lag_windows.items()
+        },
+        "event_study": (
+            {
+                "threshold": result.event_study.threshold,
+                "n_events": result.event_study.n_events,
+                "avg_forward_return_after_drop": result.event_study.avg_forward_return_after_drop,
+                "avg_forward_return_baseline": result.event_study.avg_forward_return_baseline,
+                "n_baseline": result.event_study.n_baseline,
+            }
+            if result.event_study
+            else None
+        ),
     }

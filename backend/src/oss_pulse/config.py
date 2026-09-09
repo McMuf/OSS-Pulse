@@ -24,6 +24,8 @@ class Company:
     tier: int
     repos: list[str]
     caveat: str | None = None
+    delisted: bool = False
+    delisted_note: str | None = None
 
 
 def load_companies() -> list[Company]:
@@ -37,6 +39,8 @@ def load_companies() -> list[Company]:
             tier=entry["tier"],
             repos=entry["repos"],
             caveat=entry.get("caveat"),
+            delisted=entry.get("delisted", False),
+            delisted_note=entry.get("delisted_note"),
         )
         for entry in raw["companies"]
     ]

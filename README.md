@@ -23,7 +23,7 @@ commit before moving to the next.
 - [x] Stage 4 — FastAPI backend serving `/companies`, `/companies/{ticker}` from real data + composite score
 - [x] Stage 5 — Next.js dark-mode leaderboard page
 - [x] Stage 6 — Company detail page (repo/sub-metric breakdown; price chart deferred to Stage 7)
-- [ ] Stage 7 — yfinance price data + backtest (correlation, event study) + the detail page's price chart
+- [x] Stage 7 — yfinance price data + backtest (correlation, event study) + the detail page's price chart
 - [ ] Stage 8 — Methodology + About/disclaimer pages
 - [ ] Stretch — BigQuery/GH Archive Phase 0 replication, dbt, Tier 2 confidence badges
 - [ ] Stretch — GitLab API ingestion (GitLab has no actively-maintained repo on GitHub; dropped from `companies.yaml` for now, see note below)
@@ -48,6 +48,33 @@ Missing sub-metrics are dropped and the remaining weights renormalized to
 accumulates snapshots, the last three metrics phase in automatically.
 A company with multiple repos (e.g. HashiCorp) gets the plain average of
 its repos' composite scores.
+
+## Backtest
+
+`backend/src/oss_pulse/scoring/backtest.py` correlates forward stock returns
+against **commit velocity only** — not the full 6-metric composite score.
+Five of the six sub-metrics only started accumulating real history when the
+Stage 3 cron began running; commit velocity is the one metric GitHub already
+gives us a genuine 52-week trailing history for. This is close to a direct
+re-run of the SSRN paper the spec's §0 discusses (commit activity vs.
+returns), with the fixes that paper's own diagnosis suggested: open-core
+companies instead of big tech, and 1-week/1-month/1-quarter forward windows
+instead of next-day volatility.
+
+Lookahead-bias note: each weekly score point uses only data from *before*
+that week (an 8-week recent average vs. the preceding 12-week baseline) —
+never the future. Sample sizes are small (~30 weekly points per company,
+since we're limited to ~52 weeks of GitHub-provided commit history) and
+explicitly reported alongside every correlation number.
+
+**Delisted companies:** HashiCorp, Confluent, and Couchbase were all
+acquired and taken private (by IBM, IBM, and Haveli Investments
+respectively) after this project's knowledge was last updated — genuinely
+no public stock price exists for them anymore. They're still tracked for
+OSS health (their repos are real, active projects), but marked `delisted`
+in `companies.yaml` and excluded from price ingestion and the backtest,
+with an explicit "not applicable" reason shown in the UI rather than
+silently omitted or faked.
 
 ## Scheduled ingestion
 

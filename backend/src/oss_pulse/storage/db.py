@@ -41,6 +41,13 @@ CREATE TABLE IF NOT EXISTS release_history (
     published_at TIMESTAMP,
     PRIMARY KEY (repo, tag)
 );
+
+CREATE TABLE IF NOT EXISTS stock_price (
+    ticker VARCHAR,
+    date DATE,
+    close DOUBLE,
+    PRIMARY KEY (ticker, date)
+);
 """
 
 

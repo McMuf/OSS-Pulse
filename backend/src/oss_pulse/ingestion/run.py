@@ -11,6 +11,7 @@ from github.GithubException import GithubException, RateLimitExceededException
 
 from oss_pulse.config import load_companies
 from oss_pulse.ingestion.github_client import RepoMetrics, fetch_repo_metrics, get_github_client
+from oss_pulse.ingestion.prices import fetch_price_history
 from oss_pulse.storage.db import get_connection
 
 
@@ -65,6 +66,18 @@ def _store_metrics(con, metrics: RepoMetrics) -> None:
         )
 
 
+def _store_prices(con, ticker: str, prices: list[tuple]) -> None:
+    for day, close in prices:
+        con.execute(
+            """
+            INSERT INTO stock_price (ticker, date, close)
+            VALUES (?, ?, ?)
+            ON CONFLICT (ticker, date) DO UPDATE SET close = excluded.close
+            """,
+            [ticker, day, close],
+        )
+
+
 def main() -> None:
     companies = load_companies()
     repos = sorted({repo for company in companies for repo in company.repos})
@@ -90,6 +103,22 @@ def main() -> None:
             f"{len(metrics.top_contributors)} top contributors, "
             f"{len(metrics.releases)} recent releases"
         )
+
+    tickers = sorted({c.ticker for c in companies if not c.delisted})
+    print(f"Ingesting price history for {len(tickers)} tickers...")
+    for ticker in tickers:
+        try:
+            prices = fetch_price_history(ticker)
+        except Exception as e:  # yfinance raises assorted/undocumented exception types
+            print(f"  {ticker}: skipped ({e})")
+            continue
+
+        if not prices:
+            print(f"  {ticker}: no price data returned")
+            continue
+
+        _store_prices(con, ticker, prices)
+        print(f"  {ticker}: {len(prices)} days of price history")
 
     con.close()
     print("Done.")

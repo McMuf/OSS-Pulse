@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PriceScoreChart } from "@/components/PriceScoreChart";
 import { tickerHue } from "@/lib/color";
 import {
+  BacktestResult,
   CompanyDetail,
+  LAG_WINDOW_LABELS,
   SUB_METRIC_LABELS,
   SubScores,
   pendingReason,
@@ -20,9 +23,24 @@ async function getCompany(ticker: string): Promise<CompanyDetail | null | "unrea
   }
 }
 
+async function getBacktest(ticker: string): Promise<BacktestResult | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  try {
+    const res = await fetch(`${apiUrl}/companies/${ticker}/backtest`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 function scoreColor(score: number | null): string {
   if (score === null) return "text-foreground-muted";
   return score >= 60 ? "text-accent" : "text-foreground-muted";
+}
+
+function pct(n: number): string {
+  return `${n >= 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
 }
 
 function SubMetricRow({
@@ -50,13 +68,113 @@ function SubMetricRow({
   );
 }
 
+function BacktestPanel({ backtest }: { backtest: BacktestResult }) {
+  if (!backtest.applicable) {
+    return (
+      <div className="mt-10 rounded-lg border border-border bg-surface px-5 py-6">
+        <h2 className="text-sm font-medium text-foreground-muted uppercase tracking-wide">
+          Health score vs. stock price
+        </h2>
+        <p className="mt-2 text-sm text-foreground-muted">
+          Not applicable — {backtest.reason}
+        </p>
+      </div>
+    );
+  }
+
+  if (backtest.weekly_points === 0 || backtest.price_history.length === 0) {
+    return (
+      <div className="mt-10 rounded-lg border border-border bg-surface px-5 py-6">
+        <h2 className="text-sm font-medium text-foreground-muted uppercase tracking-wide">
+          Health score vs. stock price
+        </h2>
+        <p className="mt-2 text-sm text-foreground-muted">
+          Not enough overlapping commit and price history yet.
+        </p>
+      </div>
+    );
+  }
+
+  const priceByDate = new Map(backtest.price_history.map((p) => [p.date, p.close]));
+  const sortedPriceDates = backtest.price_history.map((p) => p.date).sort();
+
+  function nearestPriceOnOrAfter(date: string): number | null {
+    if (priceByDate.has(date)) return priceByDate.get(date)!;
+    const next = sortedPriceDates.find((d) => d >= date);
+    return next ? priceByDate.get(next)! : null;
+  }
+
+  const chartData = backtest.weekly_scores.map((point) => ({
+    date: point.week,
+    score: point.score,
+    price: nearestPriceOnOrAfter(point.week),
+  }));
+
+  return (
+    <div className="mt-10 rounded-lg border border-border bg-surface px-5 py-6">
+      <h2 className="text-sm font-medium text-foreground-muted uppercase tracking-wide">
+        Health score vs. stock price
+      </h2>
+      <p className="mt-2 text-xs text-foreground-muted">
+        The green line is a commit-velocity-only score computed at each past
+        week using only data available as of that week — it is not the full
+        6-metric composite shown above, since the other sub-metrics don&apos;t
+        have historical data yet (see the README for why). Not investment
+        advice; correlation here is not evidence of a tradeable edge.
+      </p>
+
+      <div className="mt-4">
+        <PriceScoreChart data={chartData} />
+      </div>
+
+      <h3 className="mt-6 text-xs font-medium text-foreground-muted uppercase tracking-wide">
+        Forward-return correlation ({backtest.weekly_points} weekly points)
+      </h3>
+      <div className="mt-2 grid grid-cols-3 gap-3">
+        {Object.entries(backtest.lag_windows).map(([label, result]) => (
+          <div key={label} className="rounded border border-border px-3 py-2">
+            <div className="text-xs text-foreground-muted">
+              {LAG_WINDOW_LABELS[label] ?? label}
+            </div>
+            <div className="font-mono text-lg text-foreground mt-1">
+              {result.correlation !== null ? result.correlation.toFixed(2) : "—"}
+            </div>
+            <div className="text-[10px] text-foreground-muted">n={result.n}</div>
+          </div>
+        ))}
+      </div>
+
+      {backtest.event_study && (
+        <div className="mt-4 text-xs text-foreground-muted">
+          <span className="font-medium text-foreground">Event study: </span>
+          in {backtest.event_study.n_events} week
+          {backtest.event_study.n_events === 1 ? "" : "s"} with a sharp score
+          drop (≤{backtest.event_study.threshold} pts week-over-week),
+          average 1-month forward return was{" "}
+          {backtest.event_study.avg_forward_return_after_drop !== null
+            ? pct(backtest.event_study.avg_forward_return_after_drop)
+            : "n/a (no qualifying weeks)"}
+          , vs. {pct(backtest.event_study.avg_forward_return_baseline)} across
+          the other {backtest.event_study.n_baseline} weeks. Sample sizes this
+          small are not statistically meaningful on their own — shown for
+          transparency, not as a signal.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function CompanyPage({
   params,
 }: {
   params: Promise<{ ticker: string }>;
 }) {
   const { ticker } = await params;
-  const company = await getCompany(ticker.toUpperCase());
+  const upperTicker = ticker.toUpperCase();
+  const [company, backtest] = await Promise.all([
+    getCompany(upperTicker),
+    getBacktest(upperTicker),
+  ]);
 
   if (company === null) notFound();
 
@@ -112,10 +230,20 @@ export default async function CompanyPage({
                   >
                     Tier {company.tier}
                   </span>
+                  {company.delisted && (
+                    <span className="text-xs rounded-full border border-border/60 px-2 py-0.5 text-foreground-muted/70">
+                      Acquired / delisted
+                    </span>
+                  )}
                 </div>
                 {company.caveat && (
                   <p className="text-sm text-foreground-muted/70 italic mt-1">
                     {company.caveat}
+                  </p>
+                )}
+                {company.delisted && company.delisted_note && (
+                  <p className="text-sm text-foreground-muted/70 italic mt-1">
+                    {company.delisted_note}
                   </p>
                 )}
               </div>
@@ -129,16 +257,7 @@ export default async function CompanyPage({
               </div>
             </div>
 
-            <div className="mt-10 rounded-lg border border-border bg-surface px-5 py-6">
-              <h2 className="text-sm font-medium text-foreground-muted uppercase tracking-wide">
-                Health score vs. stock price
-              </h2>
-              <p className="mt-2 text-sm text-foreground-muted">
-                Coming once stock price data is wired up (yfinance
-                integration) — showing a chart with no price data behind it
-                would be worse than showing nothing.
-              </p>
-            </div>
+            {backtest && <BacktestPanel backtest={backtest} />}
 
             <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">
               Repo breakdown
