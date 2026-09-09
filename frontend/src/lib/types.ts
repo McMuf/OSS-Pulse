@@ -75,6 +75,25 @@ export const LAG_WINDOW_LABELS: Record<string, string> = {
   "1_quarter": "1 quarter",
 };
 
+export type SubMetricInfo = {
+  key: string;
+  label: string;
+  weight_pct: number;
+  description: string;
+  requires: string;
+};
+
+export type DataSource = { name: string; used_for: string };
+
+export type Methodology = {
+  sub_metrics: SubMetricInfo[];
+  renormalization_note: string;
+  company_rollup_note: string;
+  data_sources: DataSource[];
+  backtest: { metric: string; lag_windows: string[]; notes: string };
+  limitations: string[];
+};
+
 export const SUB_METRIC_LABELS: Record<keyof SubScores, string> = {
   commit_velocity: "Commit velocity trend",
   contributor_breadth: "Contributor breadth",

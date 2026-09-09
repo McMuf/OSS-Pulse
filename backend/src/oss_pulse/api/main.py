@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from oss_pulse.config import Company, load_companies
 from oss_pulse.scoring.backtest import compute_backtest
 from oss_pulse.scoring.composite import compute_company_score, compute_repo_scores
+from oss_pulse.scoring.methodology import get_methodology
 from oss_pulse.storage.db import get_connection
 
 app = FastAPI(title="OSS Pulse API")
@@ -31,6 +32,11 @@ def _all_repos(companies: list[Company]) -> list[str]:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/methodology")
+def methodology() -> dict:
+    return get_methodology()
 
 
 @app.get("/companies")

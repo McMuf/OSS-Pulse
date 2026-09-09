@@ -14,8 +14,10 @@ longer horizons to see whether that fixes the signal or confirms the null result
 
 ## Status
 
-Early scaffold. Following the staged build order below — each stage ends with a
-commit before moving to the next.
+Core roadmap complete — ingestion, scoring, backtest, and full dashboard
+(leaderboard, detail, methodology, about pages) are all working end to end.
+Remaining items are optional stretch goals, plus a deployment target still
+to be chosen.
 
 - [x] Stage 1 — repo scaffold, companies.yaml, backend/frontend skeletons
 - [x] Stage 2 — GitHub API ingestion (commit/contributor/release data) → DuckDB
@@ -24,7 +26,7 @@ commit before moving to the next.
 - [x] Stage 5 — Next.js dark-mode leaderboard page
 - [x] Stage 6 — Company detail page (repo/sub-metric breakdown; price chart deferred to Stage 7)
 - [x] Stage 7 — yfinance price data + backtest (correlation, event study) + the detail page's price chart
-- [ ] Stage 8 — Methodology + About/disclaimer pages
+- [x] Stage 8 — Methodology + About/disclaimer pages
 - [ ] Stretch — BigQuery/GH Archive Phase 0 replication, dbt, Tier 2 confidence badges
 - [ ] Stretch — GitLab API ingestion (GitLab has no actively-maintained repo on GitHub; dropped from `companies.yaml` for now, see note below)
 

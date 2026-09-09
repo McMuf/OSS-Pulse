@@ -51,13 +51,7 @@ export default async function Home() {
     : null;
 
   return (
-    <div className="flex flex-col flex-1 bg-background">
-      <div className="border-b border-border bg-surface px-6 py-3 text-sm text-foreground-muted">
-        Research/engineering demo, not investment advice. OSS activity
-        metrics are noisy and gameable; scores shown here are historical
-        context, not predictions.
-      </div>
-
+    <div className="flex flex-col flex-1">
       <main className="flex-1 w-full max-w-3xl mx-auto px-6 py-12">
         <h1 className="text-2xl font-semibold text-foreground tracking-tight">
           OSS Pulse
