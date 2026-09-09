@@ -21,7 +21,7 @@ commit before moving to the next.
 - [x] Stage 2 — GitHub API ingestion (commit/contributor/release data) → DuckDB
 - [x] Stage 3 — GitHub Actions scheduled ingestion (moved up so data keeps refreshing on its own)
 - [x] Stage 4 — FastAPI backend serving `/companies`, `/companies/{ticker}` from real data + composite score
-- [ ] Stage 5 — Next.js dark-mode leaderboard page
+- [x] Stage 5 — Next.js dark-mode leaderboard page
 - [ ] Stage 6 — Company detail page (health score vs. stock price chart)
 - [ ] Stage 7 — yfinance price data + backtest (correlation, event study)
 - [ ] Stage 8 — Methodology + About/disclaimer pages

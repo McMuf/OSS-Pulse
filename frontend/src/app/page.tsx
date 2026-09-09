@@ -19,8 +19,50 @@ async function getCompanies(): Promise<CompanySummary[] | null> {
   }
 }
 
+// Deterministic hue per ticker so each company gets a stable, distinct
+// avatar color across renders without needing a design-time color list.
+function tickerHue(ticker: string): number {
+  let hash = 0;
+  for (const char of ticker) hash = (hash * 31 + char.charCodeAt(0)) % 360;
+  return hash;
+}
+
+function CompanyAvatar({ name, ticker }: { name: string; ticker: string }) {
+  const hue = tickerHue(ticker);
+  return (
+    <div
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-medium text-white"
+      style={{ backgroundColor: `hsl(${hue}, 45%, 32%)` }}
+    >
+      {name.charAt(0)}
+    </div>
+  );
+}
+
+function ScoreDisplay({ score }: { score: number | null }) {
+  if (score === null) {
+    return <span className="font-mono text-foreground-muted text-sm">—</span>;
+  }
+  const strong = score >= 60;
+  return (
+    <div className="text-right">
+      <div
+        className={`font-mono text-lg font-semibold ${strong ? "text-accent" : "text-foreground-muted"}`}
+      >
+        {score.toFixed(1)}
+      </div>
+      <div className="text-[10px] uppercase tracking-wide text-foreground-muted">
+        Health score
+      </div>
+    </div>
+  );
+}
+
 export default async function Home() {
   const companies = await getCompanies();
+  const ranked = companies
+    ? [...companies].sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+    : null;
 
   return (
     <div className="flex flex-col flex-1 bg-background">
@@ -30,7 +72,7 @@ export default async function Home() {
         context, not predictions.
       </div>
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-12">
+      <main className="flex-1 w-full max-w-3xl mx-auto px-6 py-12">
         <h1 className="text-2xl font-semibold text-foreground tracking-tight">
           OSS Pulse
         </h1>
@@ -40,41 +82,58 @@ export default async function Home() {
         </p>
 
         <div className="mt-10 rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
-          {companies === null && (
+          {ranked === null && (
             <div className="px-5 py-6 text-foreground-muted text-sm">
               Couldn&apos;t reach the backend at{" "}
               <code className="font-mono">
                 {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
               </code>
-              . Start it with <code className="font-mono">uvicorn oss_pulse.api.main:app</code>{" "}
+              . Start it with{" "}
+              <code className="font-mono">uvicorn oss_pulse.api.main:app</code>{" "}
               from <code className="font-mono">backend/</code>.
             </div>
           )}
 
-          {companies?.map((c) => (
+          {ranked?.map((c, i) => (
             <div
               key={c.ticker}
-              className="flex items-center justify-between px-5 py-4"
+              className="flex items-center gap-4 px-5 py-4 hover:bg-surface-raised transition-colors"
             >
-              <div>
+              <span className="w-4 shrink-0 text-right font-mono text-xs text-foreground-muted">
+                {i + 1}
+              </span>
+
+              <CompanyAvatar name={c.name} ticker={c.ticker} />
+
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-foreground truncate">
                     {c.name}
                   </span>
                   <span className="text-foreground-muted text-sm">
                     {c.ticker}
                   </span>
-                  <span className="text-xs rounded-full border border-border px-2 py-0.5 text-foreground-muted">
+                  <span
+                    className={`text-xs rounded-full border px-2 py-0.5 shrink-0 ${
+                      c.tier === 1
+                        ? "border-border text-foreground-muted"
+                        : "border-border/60 text-foreground-muted/70 border-dashed"
+                    }`}
+                  >
                     Tier {c.tier}
                   </span>
                 </div>
-                <div className="text-xs text-foreground-muted mt-1">
+                <div className="text-xs text-foreground-muted mt-1 truncate">
                   {c.repos.join(", ")}
                 </div>
+                {c.caveat && (
+                  <div className="text-xs text-foreground-muted/70 italic mt-0.5">
+                    {c.caveat}
+                  </div>
+                )}
               </div>
-              <div className="font-mono text-foreground-muted">
-                {c.score ?? "—"}
-              </div>
+
+              <ScoreDisplay score={c.score} />
             </div>
           ))}
         </div>
