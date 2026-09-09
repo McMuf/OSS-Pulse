@@ -26,6 +26,8 @@ from datetime import date, timedelta
 import duckdb
 import numpy as np
 
+from oss_pulse.scoring.common import clip_score
+
 RECENT_WINDOW = 8
 BASELINE_WINDOW = 12
 MIN_WEEKS_REQUIRED = RECENT_WINDOW + BASELINE_WINDOW  # 20
@@ -52,7 +54,7 @@ def _velocity_score_series(counts: list[int]) -> list[float | None]:
             continue
         recent_avg = sum(recent) / len(recent)
         ratio = recent_avg / baseline_avg
-        scores[i] = max(0.0, min(100.0, 50 + (ratio - 1) * 50))
+        scores[i] = clip_score(50 + (ratio - 1) * 50)
     return scores
 
 

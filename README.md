@@ -129,6 +129,22 @@ $env:PYTHONPATH="src"
 .venv\Scripts\python.exe -m oss_pulse.ingestion.run
 ```
 
+### Development / tests
+
+The backend is packaged with `pyproject.toml` (editable install configures the
+`oss_pulse` import path, so you don't need to set `PYTHONPATH` manually):
+
+```bash
+cd backend
+uv pip install -e ".[dev]"    # or: pip install -e ".[dev]"
+pytest                        # 38 tests across scoring, backtest, methodology
+ruff check src tests          # bug-catching lint (F, E9)
+```
+
+`requirements.txt` remains the authoritative runtime manifest for the scheduled
+ingestion deploy — packaging adds metadata, the dev extra, and pytest/ruff
+config without changing how the app is deployed.
+
 ## Frontend setup
 
 ```powershell

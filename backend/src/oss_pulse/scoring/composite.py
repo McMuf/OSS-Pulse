@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 
 import duckdb
 
+from oss_pulse.scoring.common import clip_score
+
 BASE_WEIGHTS: dict[str, float] = {
     "commit_velocity": 35,
     "contributor_breadth": 25,
@@ -32,10 +34,6 @@ BASE_WEIGHTS: dict[str, float] = {
 RECENT_WEEKS_WINDOW = 8
 MIN_WEEKS_FOR_VELOCITY = 8
 MIN_RELEASES_FOR_CADENCE = 2
-
-
-def _clip(score: float) -> float:
-    return max(0.0, min(100.0, score))
 
 
 def _commit_velocity_score(con: duckdb.DuckDBPyConnection, repo: str) -> float | None:
@@ -56,7 +54,7 @@ def _commit_velocity_score(con: duckdb.DuckDBPyConnection, repo: str) -> float |
 
     recent_avg = sum(counts[-RECENT_WEEKS_WINDOW:]) / RECENT_WEEKS_WINDOW
     ratio = recent_avg / overall_avg
-    return _clip(50 + (ratio - 1) * 50)
+    return clip_score(50 + (ratio - 1) * 50)
 
 
 def _release_cadence_score(con: duckdb.DuckDBPyConnection, repo: str) -> float | None:
@@ -82,7 +80,7 @@ def _release_cadence_score(con: duckdb.DuckDBPyConnection, repo: str) -> float |
         return None
 
     median_gap = statistics.median(gaps)
-    return _clip(100 - median_gap / 3)
+    return clip_score(100 - median_gap / 3)
 
 
 def _latest_snapshot_per_repo(
@@ -113,7 +111,7 @@ def _contributor_breadth_scores(
     """
     latest = _latest_snapshot_per_repo(con, repos)
     log_counts = {
-        repo: math.log10(row[3] + 1) for repo, row in latest.items() if row[3] is not None
+        repo: math.log10(row[4] + 1) for repo, row in latest.items() if row[4] is not None
     }
     if not log_counts:
         return {}
@@ -122,7 +120,7 @@ def _contributor_breadth_scores(
     if hi == lo:
         return {repo: 50.0 for repo in log_counts}
 
-    return {repo: _clip((v - lo) / (hi - lo) * 100) for repo, v in log_counts.items()}
+    return {repo: clip_score((v - lo) / (hi - lo) * 100) for repo, v in log_counts.items()}
 
 
 def _retention_score(con: duckdb.DuckDBPyConnection, repo: str) -> float | None:
@@ -154,7 +152,7 @@ def _retention_score(con: duckdb.DuckDBPyConnection, repo: str) -> float | None:
     if not oldest_logins:
         return None
 
-    return _clip(len(oldest_logins & latest_logins) / len(oldest_logins) * 100)
+    return clip_score(len(oldest_logins & latest_logins) / len(oldest_logins) * 100)
 
 
 def _star_fork_growth_score(con: duckdb.DuckDBPyConnection, repo: str) -> float | None:
@@ -172,7 +170,7 @@ def _star_fork_growth_score(con: duckdb.DuckDBPyConnection, repo: str) -> float 
     if not deltas:
         return None
 
-    return _clip(50 + (sum(deltas) / len(deltas)) * 500)
+    return clip_score(50 + (sum(deltas) / len(deltas)) * 500)
 
 
 def _backlog_change_score(con: duckdb.DuckDBPyConnection, repo: str) -> float | None:
@@ -190,7 +188,7 @@ def _backlog_change_score(con: duckdb.DuckDBPyConnection, repo: str) -> float | 
     if not before:
         return None
 
-    return _clip(50 - ((after - before) / before) * 100)
+    return clip_score(50 - ((after - before) / before) * 100)
 
 
 @dataclass

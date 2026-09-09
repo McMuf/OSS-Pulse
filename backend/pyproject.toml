@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oss-pulse"
+version = "0.1.0"
+description = "Track open-source developer-activity metrics for a curated set of public companies and backtest correlation with forward stock returns."
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "duckdb>=1.1",
+    "PyYAML>=6.0",
+    "python-dotenv>=1.0",
+    "PyGithub>=2.5",
+    "yfinance>=1.7",
+    "pandas>=2.2",
+    "numpy>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Bug-catching rules only: unused imports/vars and F821/F822 category mistakes.
+# The codebase ships with longer, human-read cable style (>100 cols) that is not
+# worth churning for style; E9 catches genuine syntax-ish errors only.
+select = ["F", "E9"]
