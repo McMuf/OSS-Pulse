@@ -22,8 +22,8 @@ commit before moving to the next.
 - [x] Stage 3 — GitHub Actions scheduled ingestion (moved up so data keeps refreshing on its own)
 - [x] Stage 4 — FastAPI backend serving `/companies`, `/companies/{ticker}` from real data + composite score
 - [x] Stage 5 — Next.js dark-mode leaderboard page
-- [ ] Stage 6 — Company detail page (health score vs. stock price chart)
-- [ ] Stage 7 — yfinance price data + backtest (correlation, event study)
+- [x] Stage 6 — Company detail page (repo/sub-metric breakdown; price chart deferred to Stage 7)
+- [ ] Stage 7 — yfinance price data + backtest (correlation, event study) + the detail page's price chart
 - [ ] Stage 8 — Methodology + About/disclaimer pages
 - [ ] Stretch — BigQuery/GH Archive Phase 0 replication, dbt, Tier 2 confidence badges
 - [ ] Stretch — GitLab API ingestion (GitLab has no actively-maintained repo on GitHub; dropped from `companies.yaml` for now, see note below)

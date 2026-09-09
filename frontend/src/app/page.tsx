@@ -1,12 +1,6 @@
-type CompanySummary = {
-  ticker: string;
-  name: string;
-  tier: number;
-  repos: string[];
-  caveat: string | null;
-  score: number | null;
-  trend_30d: number | null;
-};
+import Link from "next/link";
+import { tickerHue } from "@/lib/color";
+import type { CompanySummary } from "@/lib/types";
 
 async function getCompanies(): Promise<CompanySummary[] | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -17,14 +11,6 @@ async function getCompanies(): Promise<CompanySummary[] | null> {
   } catch {
     return null;
   }
-}
-
-// Deterministic hue per ticker so each company gets a stable, distinct
-// avatar color across renders without needing a design-time color list.
-function tickerHue(ticker: string): number {
-  let hash = 0;
-  for (const char of ticker) hash = (hash * 31 + char.charCodeAt(0)) % 360;
-  return hash;
 }
 
 function CompanyAvatar({ name, ticker }: { name: string; ticker: string }) {
@@ -95,8 +81,9 @@ export default async function Home() {
           )}
 
           {ranked?.map((c, i) => (
-            <div
+            <Link
               key={c.ticker}
+              href={`/companies/${c.ticker}`}
               className="flex items-center gap-4 px-5 py-4 hover:bg-surface-raised transition-colors"
             >
               <span className="w-4 shrink-0 text-right font-mono text-xs text-foreground-muted">
@@ -134,7 +121,7 @@ export default async function Home() {
               </div>
 
               <ScoreDisplay score={c.score} />
-            </div>
+            </Link>
           ))}
         </div>
       </main>
