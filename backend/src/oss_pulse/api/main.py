@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from oss_pulse.config import Company, load_companies
-from oss_pulse.scoring.backtest import compute_backtest
+from oss_pulse.scoring.backtest import compute_backtest, compute_trend
 from oss_pulse.scoring.composite import compute_company_score, compute_repo_scores
 from oss_pulse.scoring.methodology import get_methodology
 from oss_pulse.storage.db import get_connection
@@ -45,6 +45,7 @@ def list_companies() -> list[dict]:
     con = get_connection()
     try:
         repo_scores = compute_repo_scores(con, _all_repos(companies))
+        trends = {c.ticker: compute_trend(con, c.repos) for c in companies}
     finally:
         con.close()
 
@@ -58,7 +59,8 @@ def list_companies() -> list[dict]:
             "delisted": c.delisted,
             "delisted_note": c.delisted_note,
             "score": compute_company_score([repo_scores[r] for r in c.repos if r in repo_scores]),
-            "trend_30d": None,  # needs historical composite scores, not just historical raw metrics
+            "trend_direction": trends[c.ticker].direction if trends[c.ticker] else None,
+            "trend_magnitude": trends[c.ticker].magnitude if trends[c.ticker] else None,
         }
         for c in companies
     ]
@@ -78,6 +80,7 @@ def get_company(ticker: str) -> dict:
     con = get_connection()
     try:
         repo_scores = compute_repo_scores(con, _all_repos(all_companies))
+        trend = compute_trend(con, company.repos)
     finally:
         con.close()
 
@@ -92,6 +95,8 @@ def get_company(ticker: str) -> dict:
         "delisted": company.delisted,
         "delisted_note": company.delisted_note,
         "score": compute_company_score(repo_breakdown),
+        "trend_direction": trend.direction if trend else None,
+        "trend_magnitude": trend.magnitude if trend else None,
         "repo_breakdown": [
             {
                 "repo": rs.repo,
@@ -104,6 +109,41 @@ def get_company(ticker: str) -> dict:
         ],
         "score_history": [],  # Stage 6/7: needs scores persisted over time, not just live-computed
     }
+
+
+@app.get("/companies/{ticker}/contributors")
+def get_contributors(ticker: str) -> dict:
+    companies = {c.ticker: c for c in load_companies()}
+    company = companies.get(ticker.upper())
+    if company is None:
+        raise HTTPException(status_code=404, detail=f"Unknown ticker: {ticker}")
+
+    con = get_connection()
+    try:
+        repos_data = []
+        for repo in company.repos:
+            rows = con.execute(
+                """
+                SELECT login, contributions FROM contributor_snapshot
+                WHERE repo = ?
+                QUALIFY ROW_NUMBER() OVER (PARTITION BY login ORDER BY fetched_at DESC) = 1
+                ORDER BY contributions DESC
+                """,
+                [repo],
+            ).fetchall()
+            repos_data.append(
+                {
+                    "repo": repo,
+                    "contributors": [
+                        {"login": login, "contributions": contributions}
+                        for login, contributions in rows
+                    ],
+                }
+            )
+    finally:
+        con.close()
+
+    return {"ticker": company.ticker, "repos": repos_data}
 
 
 @app.get("/companies/{ticker}/backtest")

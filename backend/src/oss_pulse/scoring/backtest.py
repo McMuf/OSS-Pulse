@@ -67,7 +67,7 @@ def _repo_weekly_scores(con: duckdb.DuckDBPyConnection, repo: str) -> list[tuple
     return [(w, s) for w, s in zip(weeks, scores) if s is not None]
 
 
-def _company_weekly_scores(
+def company_weekly_scores(
     con: duckdb.DuckDBPyConnection, repos: list[str]
 ) -> list[tuple[date, float]]:
     """Average across a company's repos for weeks where at least one has a score."""
@@ -113,7 +113,7 @@ class BacktestResult:
 def compute_backtest(
     con: duckdb.DuckDBPyConnection, ticker: str, repos: list[str]
 ) -> BacktestResult:
-    weekly_scores = _company_weekly_scores(con, repos)
+    weekly_scores = company_weekly_scores(con, repos)
 
     lag_results: dict[str, LagResult] = {}
     # (week, score, forward_return) for whichever weeks have a computable
@@ -178,3 +178,36 @@ def compute_backtest(
         lag_windows=lag_results,
         event_study=event_study,
     )
+
+
+TREND_LOOKBACK_WEEKS = 4
+TREND_FLAT_THRESHOLD = 2.0  # point change smaller than this reads as "flat"
+
+
+@dataclass
+class TrendResult:
+    direction: str  # "up" | "down" | "flat"
+    magnitude: float  # point change, commit-velocity-only score
+
+
+def compute_trend(con: duckdb.DuckDBPyConnection, repos: list[str]) -> TrendResult | None:
+    """Directional signal only — e.g. 'health trending down' — never a
+    buy/sell/derivative recommendation. Reuses the same lookahead-safe
+    weekly commit-velocity series as the backtest, so it's consistent with
+    the numbers on the backtest panel rather than a separate live metric.
+    """
+    weekly = company_weekly_scores(con, repos)
+    if len(weekly) < 2:
+        return None
+
+    latest_score = weekly[-1][1]
+    lookback_idx = max(0, len(weekly) - 1 - TREND_LOOKBACK_WEEKS)
+    baseline_score = weekly[lookback_idx][1]
+    delta = latest_score - baseline_score
+
+    if abs(delta) < TREND_FLAT_THRESHOLD:
+        direction = "flat"
+    else:
+        direction = "up" if delta > 0 else "down"
+
+    return TrendResult(direction=direction, magnitude=round(delta, 1))

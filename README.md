@@ -51,6 +51,27 @@ accumulates snapshots, the last three metrics phase in automatically.
 A company with multiple repos (e.g. HashiCorp) gets the plain average of
 its repos' composite scores.
 
+## Trend indicator, search, and the contributor graph
+
+- **Trend direction** (`trend_direction` / `trend_magnitude` on `/companies`
+  and `/companies/{ticker}`): reuses the same lookahead-safe weekly
+  commit-velocity series the backtest computes — latest week vs. ~4 weeks
+  prior. Deliberately descriptive only ("trending up/down"), never a
+  buy/sell/derivative recommendation — that framing was considered and
+  explicitly rejected as inconsistent with this project's positioning.
+- **Search**: client-side filter over the tracked company list
+  (`components/Leaderboard.tsx`) — no backend change needed at this scale.
+- **Contributor graph** (`GET /companies/{ticker}/contributors`, rendered by
+  `components/ContributorGraph.tsx`): a bipartite node graph — repo nodes
+  and contributor nodes, edges are "contributes to." Hand-rolled with
+  `d3-force` for physics and an HTML canvas renderer (not a canned graph
+  library) for full control over the dark theme and to avoid dependency-
+  compatibility risk on a bleeding-edge Next.js/React version. A contributor
+  active on more than one of a company's tracked repos becomes a visible
+  bridge node between clusters — e.g. HashiCorp's `terraform` and `vault`
+  share several real bridge contributors. This clusters by shared repo, not
+  verified real-world collaboration (no PR/co-review data is ingested).
+
 ## Backtest
 
 `backend/src/oss_pulse/scoring/backtest.py` correlates forward stock returns

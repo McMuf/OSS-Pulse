@@ -7,7 +7,8 @@ export type CompanySummary = {
   delisted: boolean;
   delisted_note: string | null;
   score: number | null;
-  trend_30d: number | null;
+  trend_direction: "up" | "down" | "flat" | null;
+  trend_magnitude: number | null;
 };
 
 export type SubScores = {
@@ -36,8 +37,20 @@ export type CompanyDetail = {
   delisted: boolean;
   delisted_note: string | null;
   score: number | null;
+  trend_direction: "up" | "down" | "flat" | null;
+  trend_magnitude: number | null;
   repo_breakdown: RepoBreakdown[];
   score_history: unknown[];
+};
+
+export type ContributorGraphRepo = {
+  repo: string;
+  contributors: { login: string; contributions: number }[];
+};
+
+export type ContributorGraphData = {
+  ticker: string;
+  repos: ContributorGraphRepo[];
 };
 
 export type LagWindowResult = {

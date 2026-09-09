@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ContributorGraph } from "@/components/ContributorGraph";
 import { PriceScoreChart } from "@/components/PriceScoreChart";
 import { tickerHue } from "@/lib/color";
 import {
   BacktestResult,
   CompanyDetail,
+  ContributorGraphData,
   LAG_WINDOW_LABELS,
   SUB_METRIC_LABELS,
   SubScores,
@@ -20,6 +22,17 @@ async function getCompany(ticker: string): Promise<CompanyDetail | null | "unrea
     return res.json();
   } catch {
     return "unreachable";
+  }
+}
+
+async function getContributorGraph(ticker: string): Promise<ContributorGraphData | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  try {
+    const res = await fetch(`${apiUrl}/companies/${ticker}/contributors`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
   }
 }
 
@@ -171,9 +184,10 @@ export default async function CompanyPage({
 }) {
   const { ticker } = await params;
   const upperTicker = ticker.toUpperCase();
-  const [company, backtest] = await Promise.all([
+  const [company, backtest, contributorGraph] = await Promise.all([
     getCompany(upperTicker),
     getBacktest(upperTicker),
+    getContributorGraph(upperTicker),
   ]);
 
   if (company === null) notFound();
@@ -290,6 +304,19 @@ export default async function CompanyPage({
                 </div>
               ))}
             </div>
+
+            <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">
+              Contributors
+            </h2>
+            {contributorGraph && contributorGraph.repos.some((r) => r.contributors.length > 0) ? (
+              <div className="mt-3">
+                <ContributorGraph data={contributorGraph} />
+              </div>
+            ) : (
+              <div className="mt-3 rounded-lg border border-border bg-surface px-5 py-6 text-sm text-foreground-muted">
+                No contributor data yet.
+              </div>
+            )}
           </>
         )}
       </main>
