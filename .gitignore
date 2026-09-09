@@ -12,9 +12,12 @@ __pycache__/
 .ruff_cache/
 
 # --- data ---
-data/*.duckdb
+# The ingested DuckDB file IS committed (Stage 3 CI writes it back to main
+# on a schedule) so a deployed backend can serve fresh data without its own
+# database. Only ignore DuckDB's transient WAL/tmp files.
+backend/data/*.duckdb.wal
+backend/data/*.duckdb.tmp
 data/*.parquet
-backend/data/*.duckdb
 backend/data/*.parquet
 
 # --- Node / Next.js ---

@@ -19,7 +19,7 @@ commit before moving to the next.
 
 - [x] Stage 1 — repo scaffold, companies.yaml, backend/frontend skeletons
 - [x] Stage 2 — GitHub API ingestion (commit/contributor/release data) → DuckDB
-- [ ] Stage 3 — GitHub Actions scheduled ingestion (moved up so data keeps refreshing on its own)
+- [x] Stage 3 — GitHub Actions scheduled ingestion (moved up so data keeps refreshing on its own)
 - [ ] Stage 4 — FastAPI backend serving `/companies`, `/companies/{ticker}` from real data + composite score
 - [ ] Stage 5 — Next.js dark-mode leaderboard page
 - [ ] Stage 6 — Company detail page (health score vs. stock price chart)
@@ -27,6 +27,20 @@ commit before moving to the next.
 - [ ] Stage 8 — Methodology + About/disclaimer pages
 - [ ] Stretch — BigQuery/GH Archive Phase 0 replication, dbt, Tier 2 confidence badges
 - [ ] Stretch — GitLab API ingestion (GitLab has no actively-maintained repo on GitHub; dropped from `companies.yaml` for now, see note below)
+
+## Scheduled ingestion
+
+`.github/workflows/ingest.yml` runs the ingestion script daily (and on-demand
+via the Actions tab's "Run workflow" button), then commits the refreshed
+`backend/data/oss_pulse.duckdb` back to `main`. It uses the automatic
+per-run `GITHUB_TOKEN` GitHub Actions provides — no PAT secret needed, since
+we're only reading public repo data.
+
+The DuckDB file is intentionally committed to the repo (not gitignored) so a
+future deployed backend can serve it without its own database — accepted
+trade-off: binary diffs in git history on every run with new data. Repo
+Settings → Actions → General → Workflow permissions must allow "Read and
+write permissions" for the commit-back step to be able to push.
 
 ## Known gaps
 
