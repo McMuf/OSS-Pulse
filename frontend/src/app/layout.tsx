@@ -34,11 +34,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <MarketLinesBackground />
         <div className="relative z-10 flex flex-col flex-1">
           <SearchModalProvider>
-            <div className="border-b border-border bg-surface px-6 py-3 text-sm text-foreground-muted">
-              Research/engineering demo, not investment advice. OSS activity
-              metrics are noisy and gameable; scores shown here are historical
-              context, not predictions.
-            </div>
             <NavBar />
             <Suspense fallback={<TickerStripSkeleton />}>
               <TickerStripLoader />
