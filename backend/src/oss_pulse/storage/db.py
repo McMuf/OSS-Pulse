@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import duckdb
 
-from oss_pulse.config import REPO_ROOT
+from oss_pulse.config import BACKEND_ROOT
 
-DB_PATH = REPO_ROOT / "backend" / "data" / "oss_pulse.duckdb"
+DB_PATH = BACKEND_ROOT / "data" / "oss_pulse.duckdb"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS repo_snapshot (

@@ -166,10 +166,17 @@ Settings, then Actions, then General, then Workflow permissions must allow
 ## Project layout
 
 ```
-companies.yaml       # curated company -> repo mapping (source of truth)
-backend/             # Python: ingestion, DuckDB storage, FastAPI
+backend/
+  companies.yaml     # curated company -> repo mapping (source of truth)
+  ...                # Python: ingestion, DuckDB storage, FastAPI
 frontend/            # Next.js + TypeScript + Tailwind, light theme UI
 ```
+
+`companies.yaml` lives inside `backend/`, not at the repo root, on purpose:
+Render and Vercel both deploy only the `backend/` directory, never anything
+above it, so anything the backend needs at runtime has to live inside that
+directory or it silently breaks in production while still working locally
+where the full repo is present. The same reasoning applies to `.env`.
 
 ## Backend setup
 
@@ -180,7 +187,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` at the repo root and fill in `GITHUB_TOKEN`
+Copy `backend/.env.example` to `backend/.env` and fill in `GITHUB_TOKEN`
 (see the PAT generation steps in the project notes: a fine-grained token
 with "Public Repositories (read-only)" scope).
 

@@ -9,10 +9,15 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-COMPANIES_YAML_PATH = REPO_ROOT / "companies.yaml"
+# Resolved relative to this file's own location (config.py -> oss_pulse ->
+# src -> backend), not to an assumed outer repo root. Render (rootDir:
+# backend) and Vercel (root: "backend/") only ever deploy this directory,
+# never anything above it, so anything computed relative to a wider
+# "monorepo root" silently breaks in production while working locally.
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+COMPANIES_YAML_PATH = BACKEND_ROOT / "companies.yaml"
 
-load_dotenv(REPO_ROOT / ".env")
+load_dotenv(BACKEND_ROOT / ".env")
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 
