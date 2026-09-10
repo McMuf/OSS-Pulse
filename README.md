@@ -254,6 +254,34 @@ backend service's `functions` block in `vercel.json`
 explicitly. Symptom if this is missing: `/api/health` (no file access)
 works fine while any endpoint that touches DuckDB returns a 500.
 
+Server Components can't use a relative `NEXT_PUBLIC_API_URL=""` the way the
+browser can, there's no "current page" for server-side `fetch()` to resolve
+a relative path against, and Vercel's `VERCEL_URL` system env var needs an
+opt-in project setting that's easy to have not enabled on a given deploy.
+`frontend/src/lib/apiUrl.ts` sidesteps both: `getApiBaseServer()` reads the
+actual incoming request's `Host` header via Next.js's `headers()` API to
+build an absolute same-origin URL, and `getApiBaseClient()` stays a plain
+relative path for browser-side calls (the search modal). Symptom if a
+Server Component ever calls the client version by mistake, or the host
+resolution is wrong: a `SyntaxError: Unexpected token '<' ... is not valid
+JSON` in the function logs, since the server ends up parsing an HTML error
+page as if it were the API's JSON response.
+
+**A real gotcha that cost real debugging time:** Vercel's Standard
+Protection gates every URL with a random hash in it (the ones you land on
+by clicking into a specific deployment from the dashboard, e.g.
+`oss-pulse-<hash>-<team>.vercel.app`), including for production
+deployments, since mid-2025. Only the clean domain under **Settings ->
+Domains** (no hash, e.g. `oss-pulse-five.vercel.app`) is actually public.
+A browser visiting a gated URL directly still works because the browser's
+own logged-in Vercel session satisfies the gate, which makes this
+confusing to debug: the API looks reachable when you check it by hand, but
+the backend's own server-side calls to itself (no browser session) get
+Vercel's login-challenge HTML back instead of JSON. If `/api/health`
+works but the homepage still shows "couldn't reach the backend" or a
+`<!DOCTYPE` JSON parse error, check which URL you're actually testing
+against before assuming it's a code problem.
+
 This is a newer Vercel feature, so if something about the Python build or
 routing doesn't work as expected, Option B below is the fallback path and
 needs no debugging of serverless Python internals.
