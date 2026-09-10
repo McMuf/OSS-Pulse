@@ -239,6 +239,14 @@ layer open `read_only=True` (see `storage/db.py`) because Vercel Functions
 have a read-only filesystem outside of a scratch directory, and DuckDB's
 normal connect mode tries to write a WAL file even for plain reads.
 
+Vercel's build only bundles files it can trace from the code it analyzes,
+so a data file like `backend/data/oss_pulse.duckdb` (referenced only via a
+runtime path, not an import) doesn't get included automatically. The
+backend service's `functions` block in `vercel.json`
+(`"main.py": { "includeFiles": "data/**" }`) tells Vercel to bundle it
+explicitly. Symptom if this is missing: `/api/health` (no file access)
+works fine while any endpoint that touches DuckDB returns a 500.
+
 This is a newer Vercel feature, so if something about the Python build or
 routing doesn't work as expected, Option B below is the fallback path and
 needs no debugging of serverless Python internals.
