@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from oss_pulse.config import Company, load_companies
@@ -18,6 +18,14 @@ from oss_pulse.scoring.methodology import get_methodology
 from oss_pulse.storage.db import get_connection
 
 app = FastAPI(title="OSS Pulse API")
+
+# Routes are registered on a /api-prefixed router rather than directly on
+# `app` so the same code works whether the frontend calls this backend
+# directly (NEXT_PUBLIC_API_URL = a bare origin, no /api needed there since
+# the origin itself IS the backend) or through Vercel's Services routing,
+# where a single domain forwards path /api/* to this backend alongside the
+# frontend on /. Both deployment shapes are documented in the README.
+router = APIRouter(prefix="/api")
 
 # CORS_ALLOWED_ORIGINS is a comma-separated list, e.g.
 # "http://localhost:3000,https://oss-pulse.vercel.app" for local dev plus
@@ -42,20 +50,20 @@ def _all_repos(companies: list[Company]) -> list[str]:
     return sorted({repo for company in companies for repo in company.repos})
 
 
-@app.get("/health")
+@router.get("/health")
 def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/methodology")
+@router.get("/methodology")
 def methodology() -> dict:
     return get_methodology()
 
 
-@app.get("/companies")
+@router.get("/companies")
 def list_companies() -> list[dict]:
     companies = load_companies()
-    con = get_connection()
+    con = get_connection(read_only=True)
     try:
         repo_scores = compute_repo_scores(con, _all_repos(companies))
         trends = {c.ticker: compute_trend(con, c.repos) for c in companies}
@@ -83,14 +91,14 @@ def list_companies() -> list[dict]:
     ]
 
 
-@app.get("/prices")
+@router.get("/prices")
 def list_prices() -> list[dict]:
     """Real latest stock price + day-over-day change for the ticker strip —
     separate from /companies since it's simple raw price data, not a
     computed health score.
     """
     companies = [c for c in load_companies() if not c.delisted]
-    con = get_connection()
+    con = get_connection(read_only=True)
     try:
         result = []
         for c in companies:
@@ -119,7 +127,7 @@ def list_prices() -> list[dict]:
     return result
 
 
-@app.get("/companies/{ticker}")
+@router.get("/companies/{ticker}")
 def get_company(ticker: str) -> dict:
     all_companies = load_companies()
     companies = {c.ticker: c for c in all_companies}
@@ -130,7 +138,7 @@ def get_company(ticker: str) -> dict:
     # Contributor breadth is normalized against the whole tracked universe,
     # not just this company's repo(s) — otherwise a single-repo company
     # always gets a meaningless default of 50 (min == max of one value).
-    con = get_connection()
+    con = get_connection(read_only=True)
     try:
         repo_scores = compute_repo_scores(con, _all_repos(all_companies))
         trend = compute_trend(con, company.repos)
@@ -164,14 +172,14 @@ def get_company(ticker: str) -> dict:
     }
 
 
-@app.get("/companies/{ticker}/contributors")
+@router.get("/companies/{ticker}/contributors")
 def get_contributors(ticker: str) -> dict:
     companies = {c.ticker: c for c in load_companies()}
     company = companies.get(ticker.upper())
     if company is None:
         raise HTTPException(status_code=404, detail=f"Unknown ticker: {ticker}")
 
-    con = get_connection()
+    con = get_connection(read_only=True)
     try:
         repos_data = []
         for repo in company.repos:
@@ -199,7 +207,7 @@ def get_contributors(ticker: str) -> dict:
     return {"ticker": company.ticker, "repos": repos_data}
 
 
-@app.get("/companies/{ticker}/backtest")
+@router.get("/companies/{ticker}/backtest")
 def get_backtest(ticker: str) -> dict:
     companies = {c.ticker: c for c in load_companies()}
     company = companies.get(ticker.upper())
@@ -213,7 +221,7 @@ def get_backtest(ticker: str) -> dict:
             "reason": company.delisted_note or "Company is no longer publicly traded.",
         }
 
-    con = get_connection()
+    con = get_connection(read_only=True)
     try:
         result = compute_backtest(con, company.ticker, company.repos)
         price_rows = con.execute(
@@ -248,3 +256,6 @@ def get_backtest(ticker: str) -> dict:
             else None
         ),
     }
+
+
+app.include_router(router)

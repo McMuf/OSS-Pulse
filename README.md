@@ -204,46 +204,75 @@ npm run dev
 ## Deployment
 
 Once deployed, visitors just open the site's URL. Nobody needs a terminal,
-and nothing needs "starting" the way local dev does. Two pieces, each
-hosted separately, each free-tier:
+and nothing needs "starting" the way local dev does. The backend always
+serves its routes under `/api` (see `backend/main.py` and the `/api` prefix
+in `backend/src/oss_pulse/api/main.py`), and the frontend's single
+`getApiBase()` helper (`frontend/src/lib/apiUrl.ts`) is what makes both
+deployment shapes below work from the same code, controlled entirely by the
+`NEXT_PUBLIC_API_URL` environment variable.
 
-**Backend, on Render:**
+### Option A: Vercel Services (one platform, one project)
 
-1. Push this repo to GitHub if it isn't already there.
-2. In Render, choose "New" then "Blueprint," and point it at this repo.
+Vercel can host both the Next.js frontend and the FastAPI backend as
+separate "services" inside a single project, on one domain, with the
+backend's `/api/*` routes and the frontend sharing an origin so there's no
+cross-origin request at all.
+
+1. Push this repo to GitHub if it isn't already there. `vercel.json` at the
+   repo root defines the two services and the routing between them.
+2. In Vercel, "Add New" then "Project," import this repo. Vercel should
+   detect the `services` configuration in `vercel.json` automatically (the
+   "Application Preset" shows "Services" with both a `frontend` and
+   `backend` entry).
+3. Set the environment variable `NEXT_PUBLIC_API_URL` to an empty string.
+   This makes the frontend call relative `/api/...` paths, which Vercel's
+   rewrite forwards to the backend service on the same domain. Next.js
+   bakes `NEXT_PUBLIC_*` variables in at build time, so this has to be set
+   before deploying, not after.
+4. Deploy. One URL serves both pieces.
+
+The backend's `main.py` shim at the repo's `backend/` root
+(`from oss_pulse.api.main import app`) exists specifically so Vercel's
+`entrypoint: "main:app"` setting can find the app object, since the real
+code lives nested under `backend/src/`. DuckDB connections from the API
+layer open `read_only=True` (see `storage/db.py`) because Vercel Functions
+have a read-only filesystem outside of a scratch directory, and DuckDB's
+normal connect mode tries to write a WAL file even for plain reads.
+
+This is a newer Vercel feature, so if something about the Python build or
+routing doesn't work as expected, Option B below is the fallback path and
+needs no debugging of serverless Python internals.
+
+### Option B: Render (backend) + Vercel (frontend), two platforms
+
+1. In Render, choose "New" then "Blueprint," and point it at this repo.
    Render reads `render.yaml` at the repo root and configures the service
    automatically (root directory, build command, start command).
-3. Render will prompt for `CORS_ALLOWED_ORIGINS` since that's marked
-   `sync: false` in the blueprint. Leave it blank for now; it gets set in
-   step 3 of the frontend section below, once the Vercel URL exists.
-4. Deploy. Render gives you a URL like `https://oss-pulse-backend.onrender.com`.
+2. Render will prompt for `CORS_ALLOWED_ORIGINS` since that's marked
+   `sync: false` in the blueprint. Leave it blank for now.
+3. Deploy. Render gives you a URL like `https://oss-pulse-backend.onrender.com`.
    Copy it.
+4. In Vercel, import this repo as a plain Next.js project with Root
+   Directory set to `frontend` (not the "Services" preset).
+5. Set `NEXT_PUBLIC_API_URL` to the Render URL from step 3 (no trailing
+   slash, and not an empty string, since this is a separate origin).
+6. Deploy. Vercel gives you a URL like `https://oss-pulse.vercel.app`.
+7. Back on Render, set `CORS_ALLOWED_ORIGINS` to the Vercel URL from step 6
+   and redeploy the backend. Without this, the browser blocks the
+   frontend's cross-origin requests to the backend.
 
-**Frontend, on Vercel:**
+**Known limitation of Option B:** Render's free tier spins the service down
+after 15 minutes of inactivity. The first request after a period of
+idleness can take 30 to 60 seconds to wake it back up. Option A doesn't
+have this specific issue, though serverless functions have their own
+(usually much shorter) cold starts.
 
-1. In Vercel, "Add New" then "Project," and import this same repo.
-2. In the import settings, set "Root Directory" to `frontend`. Vercel
-   auto-detects the Next.js framework from there.
-3. Add an environment variable: `NEXT_PUBLIC_API_URL` set to the Render URL
-   from above (no trailing slash).
-4. Deploy. Vercel gives you a URL like `https://oss-pulse.vercel.app`.
+### Either way
 
-**Close the loop:** go back to the Render service's environment settings and
-set `CORS_ALLOWED_ORIGINS` to the Vercel URL from step 4 (comma-separate
-multiple origins if needed), then redeploy the backend. Without this step,
-the browser blocks the frontend's requests to the backend.
-
-After that, both pieces stay live on their own. The existing Stage 3 GitHub
-Actions cron keeps committing fresh data to `main` daily, and Render's
-`autoDeploy: true` means the backend redeploys automatically on every push,
-so the data shown on the live site keeps refreshing without either of us
-touching a terminal again.
-
-**Known limitation:** Render's free tier spins the service down after 15
-minutes of inactivity. The first request after a period of idleness can take
-30 to 60 seconds to wake it back up. That's a real trade-off of free
-hosting, worth knowing about before sharing the link with someone who might
-load it cold.
+The existing Stage 3 GitHub Actions cron keeps committing fresh data to
+`main` daily, and both Render and Vercel redeploy automatically on every
+push, so the data shown on the live site keeps refreshing without either of
+us touching a terminal again.
 
 ## Cold-start loading state
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContributorGraph } from "@/components/ContributorGraph";
 import { PriceScoreChart } from "@/components/PriceScoreChart";
+import { getApiBase } from "@/lib/apiUrl";
 import { tickerHue } from "@/lib/color";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import {
@@ -15,9 +16,10 @@ import {
 } from "@/lib/types";
 
 async function getCompany(ticker: string): Promise<CompanyDetail | null | "unreachable"> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetchWithTimeout(`${apiUrl}/companies/${ticker}`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${getApiBase()}/companies/${ticker}`, {
+      cache: "no-store",
+    });
     if (res.status === 404) return null;
     if (!res.ok) return "unreachable";
     return res.json();
@@ -27,9 +29,8 @@ async function getCompany(ticker: string): Promise<CompanyDetail | null | "unrea
 }
 
 async function getContributorGraph(ticker: string): Promise<ContributorGraphData | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetchWithTimeout(`${apiUrl}/companies/${ticker}/contributors`, {
+    const res = await fetchWithTimeout(`${getApiBase()}/companies/${ticker}/contributors`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -40,9 +41,8 @@ async function getContributorGraph(ticker: string): Promise<ContributorGraphData
 }
 
 async function getBacktest(ticker: string): Promise<BacktestResult | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetchWithTimeout(`${apiUrl}/companies/${ticker}/backtest`, {
+    const res = await fetchWithTimeout(`${getApiBase()}/companies/${ticker}/backtest`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -210,9 +210,7 @@ export default async function CompanyPage({
         {company === "unreachable" && (
           <div className="mt-6 rounded-sm border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
             Couldn&apos;t reach the backend at{" "}
-            <code className="font-mono">
-              {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
-            </code>
+            <code className="font-mono">{getApiBase()}</code>
             .
           </div>
         )}

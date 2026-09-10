@@ -1,11 +1,11 @@
 import { TickerStrip } from "@/components/TickerStrip";
+import { getApiBase } from "@/lib/apiUrl";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { PriceQuote } from "@/lib/types";
 
 async function getPrices(): Promise<PriceQuote[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetchWithTimeout(`${apiUrl}/prices`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${getApiBase()}/prices`, { cache: "no-store" });
     if (!res.ok) return [];
     return res.json();
   } catch {

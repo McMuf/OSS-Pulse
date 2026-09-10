@@ -1,12 +1,12 @@
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Leaderboard } from "@/components/Leaderboard";
+import { getApiBase } from "@/lib/apiUrl";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { CompanySummary } from "@/lib/types";
 
 async function getCompanies(): Promise<CompanySummary[] | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetchWithTimeout(`${apiUrl}/companies`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${getApiBase()}/companies`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -31,9 +31,7 @@ export default async function Home() {
         {companies === null && (
           <div className="mt-10 rounded-sm border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
             Couldn&apos;t reach the backend at{" "}
-            <code className="font-mono">
-              {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
-            </code>
+            <code className="font-mono">{getApiBase()}</code>
             . Start it with{" "}
             <code className="font-mono">uvicorn oss_pulse.api.main:app</code>{" "}
             from <code className="font-mono">backend/</code>.

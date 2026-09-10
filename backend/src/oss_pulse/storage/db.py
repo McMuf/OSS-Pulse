@@ -1,4 +1,7 @@
-"""DuckDB storage layer. One file on disk, gitignored — rebuilt by ingestion."""
+"""DuckDB storage layer. The file is committed to the repo (see Stage 3 in
+the README), not gitignored, so a deployed backend can serve it without its
+own database.
+"""
 
 from __future__ import annotations
 
@@ -51,7 +54,17 @@ CREATE TABLE IF NOT EXISTS stock_price (
 """
 
 
-def get_connection() -> duckdb.DuckDBPyConnection:
+def get_connection(read_only: bool = False) -> duckdb.DuckDBPyConnection:
+    """read_only=True is required on platforms with a read-only filesystem
+    outside a scratch directory (e.g. Vercel Functions) — DuckDB's normal
+    connect mode tries to acquire a write lock and touch a WAL file even for
+    plain SELECT queries, which fails there. The API layer always serves
+    read-only; only the ingestion script needs write access, and it never
+    runs on a serverless platform, so it keeps the default.
+    """
+    if read_only:
+        return duckdb.connect(str(DB_PATH), read_only=True)
+
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     con = duckdb.connect(str(DB_PATH))
     con.execute(SCHEMA)
