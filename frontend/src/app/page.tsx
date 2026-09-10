@@ -1,11 +1,12 @@
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Leaderboard } from "@/components/Leaderboard";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { CompanySummary } from "@/lib/types";
 
 async function getCompanies(): Promise<CompanySummary[] | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetch(`${apiUrl}/companies`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiUrl}/companies`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch {

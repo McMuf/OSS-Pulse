@@ -1,9 +1,10 @@
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { LAG_WINDOW_LABELS, Methodology } from "@/lib/types";
 
 async function getMethodology(): Promise<Methodology | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetch(`${apiUrl}/methodology`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiUrl}/methodology`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch {

@@ -245,6 +245,21 @@ minutes of inactivity. The first request after a period of idleness can take
 hosting, worth knowing about before sharing the link with someone who might
 load it cold.
 
+## Cold-start loading state
+
+Render's free tier sleeps the backend after inactivity, so the first request
+after a while can take up to a minute. Each route that fetches from the
+backend (`app/loading.tsx`, `app/companies/[ticker]/loading.tsx`,
+`app/methodology/loading.tsx`) uses Next.js's built-in `loading.tsx`
+convention to show a themed loading state during that wait, using
+`react-spinners` for the actual spinner rather than a hand-rolled animation.
+The root layout's ticker strip fetches independently in its own `<Suspense>`
+boundary (`components/TickerStripLoader.tsx`), so a slow backend only delays
+the ticker strip and page content, never the nav or disclaimer banner.
+`lib/fetchWithTimeout.ts` bounds every server-side fetch to 65 seconds, so a
+genuinely unreachable backend still falls through to the "couldn't reach
+backend" message instead of hanging forever.
+
 ## Why these tools
 
 - **DuckDB + Parquet** over a hosted Postgres: serverless, embedded OLAP,

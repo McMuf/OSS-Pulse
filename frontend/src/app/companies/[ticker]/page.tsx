@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ContributorGraph } from "@/components/ContributorGraph";
 import { PriceScoreChart } from "@/components/PriceScoreChart";
 import { tickerHue } from "@/lib/color";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import {
   BacktestResult,
   CompanyDetail,
@@ -16,7 +17,7 @@ import {
 async function getCompany(ticker: string): Promise<CompanyDetail | null | "unreachable"> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetch(`${apiUrl}/companies/${ticker}`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiUrl}/companies/${ticker}`, { cache: "no-store" });
     if (res.status === 404) return null;
     if (!res.ok) return "unreachable";
     return res.json();
@@ -28,7 +29,9 @@ async function getCompany(ticker: string): Promise<CompanyDetail | null | "unrea
 async function getContributorGraph(ticker: string): Promise<ContributorGraphData | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetch(`${apiUrl}/companies/${ticker}/contributors`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiUrl}/companies/${ticker}/contributors`, {
+      cache: "no-store",
+    });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -39,7 +42,9 @@ async function getContributorGraph(ticker: string): Promise<ContributorGraphData
 async function getBacktest(ticker: string): Promise<BacktestResult | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
-    const res = await fetch(`${apiUrl}/companies/${ticker}/backtest`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiUrl}/companies/${ticker}/backtest`, {
+      cache: "no-store",
+    });
     if (!res.ok) return null;
     return res.json();
   } catch {

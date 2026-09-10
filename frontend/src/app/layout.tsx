@@ -1,22 +1,11 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Suspense } from "react";
 import { MarketLinesBackground } from "@/components/MarketLinesBackground";
 import { NavBar } from "@/components/NavBar";
 import { SearchModalProvider } from "@/components/SearchModal";
-import { TickerStrip } from "@/components/TickerStrip";
-import type { PriceQuote } from "@/lib/types";
+import { TickerStripLoader, TickerStripSkeleton } from "@/components/TickerStripLoader";
 import "./globals.css";
-
-async function getPrices(): Promise<PriceQuote[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  try {
-    const res = await fetch(`${apiUrl}/prices`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -35,9 +24,7 @@ export const metadata: Metadata = {
     "Open-source developer-activity signal for public companies. A research and engineering demo, not investment advice.",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const prices = await getPrices();
-
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
@@ -53,7 +40,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               context, not predictions.
             </div>
             <NavBar />
-            <TickerStrip quotes={prices} />
+            <Suspense fallback={<TickerStripSkeleton />}>
+              <TickerStripLoader />
+            </Suspense>
             {children}
           </SearchModalProvider>
         </div>
