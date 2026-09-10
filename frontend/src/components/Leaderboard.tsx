@@ -3,7 +3,24 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { tickerHue } from "@/lib/color";
+import { Sparkline } from "@/components/Sparkline";
 import type { CompanySummary } from "@/lib/types";
+
+type FilterKey = "all" | "tier1" | "tier2" | "delisted";
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "tier1", label: "Tier 1" },
+  { key: "tier2", label: "Tier 2" },
+  { key: "delisted", label: "Delisted" },
+];
+
+function matchesFilter(c: CompanySummary, filter: FilterKey): boolean {
+  if (filter === "all") return true;
+  if (filter === "delisted") return c.delisted;
+  if (filter === "tier1") return c.tier === 1;
+  return c.tier === 2;
+}
 
 function CompanyAvatar({ name, ticker }: { name: string; ticker: string }) {
   const hue = tickerHue(ticker);
@@ -48,7 +65,7 @@ function TrendBadge({
   return (
     <span
       className={`text-xs font-mono ${up ? "text-accent" : "text-foreground-muted"}`}
-      title="Commit-velocity trend over the last ~4 weeks — not the full composite score, not a trading signal"
+      title="Commit-velocity trend over the last ~4 weeks. Not the full composite score, not a trading signal"
     >
       {up ? "▲" : "▼"} {Math.abs(magnitude).toFixed(1)}
     </span>
@@ -56,32 +73,35 @@ function TrendBadge({
 }
 
 export function Leaderboard({ companies }: { companies: CompanySummary[] }) {
-  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<FilterKey>("all");
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const base = q
-      ? companies.filter(
-          (c) => c.name.toLowerCase().includes(q) || c.ticker.toLowerCase().includes(q)
-        )
-      : companies;
+    const base = companies.filter((c) => matchesFilter(c, filter));
     return [...base].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
-  }, [companies, query]);
+  }, [companies, filter]);
 
   return (
     <>
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search companies or tickers…"
-        className="mt-10 w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-accent transition-colors"
-      />
+      <div className="flex gap-2 border-b border-border">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`text-sm px-3 py-2 border-b-2 transition-colors ${
+              filter === f.key
+                ? "border-accent text-foreground"
+                : "border-transparent text-foreground-muted hover:text-foreground"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
-      <div className="mt-4 rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
+      <div className="mt-4 rounded-sm border border-border bg-surface divide-y divide-border overflow-hidden">
         {filtered.length === 0 && (
           <div className="px-5 py-6 text-foreground-muted text-sm">
-            No companies match &quot;{query}&quot;.
+            No companies in this filter.
           </div>
         )}
 
@@ -124,6 +144,11 @@ export function Leaderboard({ companies }: { companies: CompanySummary[] }) {
                 <div className="text-xs text-foreground-muted/70 italic mt-0.5">{c.caveat}</div>
               )}
             </div>
+
+            <Sparkline
+              values={c.recent_scores}
+              color={c.trend_direction === "up" ? "#3ecf8e" : "#8b8f98"}
+            />
 
             <ScoreDisplay score={c.score} />
           </Link>

@@ -70,7 +70,7 @@ function SubMetricRow({
       <span className="text-sm text-foreground">{SUB_METRIC_LABELS[metric]}</span>
       {pending ? (
         <span className="text-xs text-foreground-muted italic">
-          Pending — {pendingReason(metric)}
+          Pending. {pendingReason(metric)}
         </span>
       ) : (
         <span className={`font-mono text-sm ${scoreColor(value)}`}>
@@ -84,12 +84,12 @@ function SubMetricRow({
 function BacktestPanel({ backtest }: { backtest: BacktestResult }) {
   if (!backtest.applicable) {
     return (
-      <div className="mt-10 rounded-lg border border-border bg-surface px-5 py-6">
+      <div className="mt-10 rounded-sm border border-border bg-surface px-5 py-6">
         <h2 className="text-sm font-medium text-foreground-muted uppercase tracking-wide">
           Health score vs. stock price
         </h2>
         <p className="mt-2 text-sm text-foreground-muted">
-          Not applicable — {backtest.reason}
+          Not applicable. {backtest.reason}
         </p>
       </div>
     );
@@ -97,7 +97,7 @@ function BacktestPanel({ backtest }: { backtest: BacktestResult }) {
 
   if (backtest.weekly_points === 0 || backtest.price_history.length === 0) {
     return (
-      <div className="mt-10 rounded-lg border border-border bg-surface px-5 py-6">
+      <div className="mt-10 rounded-sm border border-border bg-surface px-5 py-6">
         <h2 className="text-sm font-medium text-foreground-muted uppercase tracking-wide">
           Health score vs. stock price
         </h2>
@@ -124,13 +124,13 @@ function BacktestPanel({ backtest }: { backtest: BacktestResult }) {
   }));
 
   return (
-    <div className="mt-10 rounded-lg border border-border bg-surface px-5 py-6">
+    <div className="mt-10 rounded-sm border border-border bg-surface px-5 py-6">
       <h2 className="text-sm font-medium text-foreground-muted uppercase tracking-wide">
         Health score vs. stock price
       </h2>
       <p className="mt-2 text-xs text-foreground-muted">
         The green line is a commit-velocity-only score computed at each past
-        week using only data available as of that week — it is not the full
+        week using only data available as of that week. It is not the full
         6-metric composite shown above, since the other sub-metrics don&apos;t
         have historical data yet (see the README for why). Not investment
         advice; correlation here is not evidence of a tradeable edge.
@@ -169,8 +169,8 @@ function BacktestPanel({ backtest }: { backtest: BacktestResult }) {
             : "n/a (no qualifying weeks)"}
           , vs. {pct(backtest.event_study.avg_forward_return_baseline)} across
           the other {backtest.event_study.n_baseline} weeks. Sample sizes this
-          small are not statistically meaningful on their own — shown for
-          transparency, not as a signal.
+          small are not statistically meaningful on their own. They are shown
+          for transparency, not as a signal.
         </div>
       )}
     </div>
@@ -203,7 +203,7 @@ export default async function CompanyPage({
         </Link>
 
         {company === "unreachable" && (
-          <div className="mt-6 rounded-lg border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
+          <div className="mt-6 rounded-sm border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
             Couldn&apos;t reach the backend at{" "}
             <code className="font-mono">
               {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
@@ -274,7 +274,7 @@ export default async function CompanyPage({
               {company.repo_breakdown.map((repo) => (
                 <div
                   key={repo.repo}
-                  className="rounded-lg border border-border bg-surface px-5 py-4"
+                  className="rounded-sm border border-border bg-surface px-5 py-4"
                 >
                   <div className="flex items-center justify-between">
                     <a
@@ -313,7 +313,7 @@ export default async function CompanyPage({
                 <ContributorGraph data={contributorGraph} />
               </div>
             ) : (
-              <div className="mt-3 rounded-lg border border-border bg-surface px-5 py-6 text-sm text-foreground-muted">
+              <div className="mt-3 rounded-sm border border-border bg-surface px-5 py-6 text-sm text-foreground-muted">
                 No contributor data yet.
               </div>
             )}

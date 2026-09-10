@@ -17,8 +17,8 @@ SUB_METRIC_INFO = {
         "label": "Contributor breadth",
         "description": (
             "Current contributor count, log-scaled then min-max normalized "
-            "against every other tracked repo — self-calibrating rather than "
-            "picking an arbitrary 'good' contributor count."
+            "against every other tracked repo. This is self-calibrating "
+            "rather than picking an arbitrary 'good' contributor count."
         ),
         "requires": "current contributor data (available immediately)",
     },
@@ -26,7 +26,7 @@ SUB_METRIC_INFO = {
         "label": "Release cadence",
         "description": "Median days between recent GitHub releases.",
         "requires": (
-            "2+ GitHub releases on record — unavailable for repos that tag "
+            "2+ GitHub releases on record. Unavailable for repos that tag "
             "differently (e.g. mongodb/mongo, apache/kafka don't use GitHub Releases)"
         ),
     },
@@ -46,9 +46,9 @@ SUB_METRIC_INFO = {
     "issue_backlog_change": {
         "label": "Issue backlog change",
         "description": (
-            "% change in open issue count — a coarse team-bandwidth proxy, "
-            "not a real response-latency measurement (deliberately out of "
-            "scope, see limitations)."
+            "% change in open issue count. This is a coarse team-bandwidth "
+            "proxy, not a real response-latency measurement (deliberately "
+            "out of scope, see limitations)."
         ),
         "requires": "2+ ingestion snapshots over time",
     },
@@ -65,15 +65,15 @@ DATA_SOURCES = [
     },
     {
         "name": "companies.yaml",
-        "used_for": "curated company-to-repo mapping, tier confidence level, delisted status — hand-maintained and versioned in the repo",
+        "used_for": "curated company-to-repo mapping, tier confidence level, delisted status. Hand-maintained and versioned in the repo.",
     },
 ]
 
 LIMITATIONS = [
     "OSS metrics are noisy and somewhat gameable (bot commits, mirrored/forked repos, corporate-mandated commit patterns).",
     "No transaction costs, slippage, or execution latency modeled in the backtest.",
-    "Small sample size across a curated universe (~10 companies, ~30 weekly points each) — not statistically robust, and not meant to be.",
-    "The backtest correlates commit velocity only, not the full 6-metric composite score — five sub-metrics only started accumulating real history when the daily ingestion cron began running.",
+    "Small sample size across a curated universe (~10 companies, ~30 weekly points each). Not statistically robust, and not meant to be.",
+    "The backtest correlates commit velocity only, not the full 6-metric composite score. Five sub-metrics only started accumulating real history when the daily ingestion cron began running.",
     "Correlation shown is not evidence of a tradeable edge; public alt-data signals decay quickly once known.",
     "This is a research and data-engineering demonstration, not investment advice.",
 ]
@@ -91,7 +91,8 @@ def get_methodology() -> dict:
         ],
         "renormalization_note": (
             "Missing sub-metrics are dropped and the remaining weights "
-            "renormalized to 100% — never filled with a fake neutral value."
+            "renormalized to 100%. They are never filled with a fake "
+            "neutral value."
         ),
         "company_rollup_note": (
             "A company with multiple tracked repos (e.g. HashiCorp) gets the "

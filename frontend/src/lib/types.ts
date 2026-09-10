@@ -9,6 +9,15 @@ export type CompanySummary = {
   score: number | null;
   trend_direction: "up" | "down" | "flat" | null;
   trend_magnitude: number | null;
+  recent_scores: number[];
+};
+
+export type PriceQuote = {
+  ticker: string;
+  name: string;
+  price: number;
+  change_pct: number | null;
+  recent_prices: number[];
 };
 
 export type SubScores = {

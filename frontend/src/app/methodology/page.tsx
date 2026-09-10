@@ -22,14 +22,14 @@ export default async function MethodologyPage() {
         </h1>
         <p className="mt-2 text-foreground-muted max-w-2xl">
           How the OSS Health Score is computed, where the data comes from,
-          and where this breaks down — served from{" "}
+          and where this breaks down. Served from{" "}
           <code className="font-mono text-sm">GET /methodology</code> so the
           weights below are the actual weights used, not a description that
           can drift out of sync with the code.
         </p>
 
         {methodology === null && (
-          <div className="mt-6 rounded-lg border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
+          <div className="mt-6 rounded-sm border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
             Couldn&apos;t reach the backend at{" "}
             <code className="font-mono">
               {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
@@ -43,7 +43,7 @@ export default async function MethodologyPage() {
             <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">
               Composite score weights
             </h2>
-            <div className="mt-3 rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
+            <div className="mt-3 rounded-sm border border-border bg-surface divide-y divide-border overflow-hidden">
               {methodology.sub_metrics.map((m) => (
                 <div key={m.key} className="px-5 py-4">
                   <div className="flex items-center justify-between">
@@ -67,7 +67,7 @@ export default async function MethodologyPage() {
             <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">
               Data sources
             </h2>
-            <div className="mt-3 rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
+            <div className="mt-3 rounded-sm border border-border bg-surface divide-y divide-border overflow-hidden">
               {methodology.data_sources.map((s) => (
                 <div key={s.name} className="px-5 py-4">
                   <div className="font-medium text-foreground">{s.name}</div>
@@ -79,7 +79,7 @@ export default async function MethodologyPage() {
             <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">
               Backtest methodology
             </h2>
-            <div className="mt-3 rounded-lg border border-border bg-surface px-5 py-4">
+            <div className="mt-3 rounded-sm border border-border bg-surface px-5 py-4">
               <div className="text-sm text-foreground">
                 Metric:{" "}
                 <span className="font-mono text-foreground-muted">
@@ -100,7 +100,7 @@ export default async function MethodologyPage() {
             <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">
               Limitations
             </h2>
-            <ul className="mt-3 rounded-lg border border-border bg-surface px-5 py-4 space-y-2 list-disc list-inside">
+            <ul className="mt-3 rounded-sm border border-border bg-surface px-5 py-4 space-y-2 list-disc list-inside">
               {methodology.limitations.map((l) => (
                 <li key={l} className="text-sm text-foreground-muted">
                   {l}

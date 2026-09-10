@@ -6,7 +6,7 @@ export default function AboutPage() {
           About
         </h1>
 
-        <div className="mt-6 rounded-lg border border-border bg-surface px-5 py-4">
+        <div className="mt-6 rounded-sm border border-border bg-surface px-5 py-4">
           <p className="text-sm text-foreground">
             OSS Pulse is a research and data-engineering demonstration
             project. It is <span className="font-medium">not</span> a trading
@@ -22,14 +22,15 @@ export default function AboutPage() {
         <p className="mt-3 text-sm text-foreground-muted">
           The working idea: a company&apos;s public open-source repository
           activity (commit velocity, contributor retention, release cadence)
-          is a real-time-ish, public signal of engineering health — most
+          is a real-time-ish, public signal of engineering health. It is most
           defensible for open-core companies where the repo essentially{" "}
-          <em>is</em> the product, weaker (but still an interesting
-          narrative) for big-tech flagship projects like React or Kubernetes.
+          <em>is</em> the product. For big-tech flagship projects like React
+          or Kubernetes, the signal is weaker but still an interesting
+          narrative.
         </p>
 
         <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">
-          This isn&apos;t a new idea — and that&apos;s the point
+          This isn&apos;t a new idea, and that&apos;s the point
         </h2>
         <p className="mt-3 text-sm text-foreground-muted">
           A 2026 SSRN working paper tested almost this exact thesis on 9 major
@@ -40,11 +41,12 @@ export default function AboutPage() {
           actual product.
         </p>
         <p className="mt-3 text-sm text-foreground-muted">
-          This project is a controlled replication-and-fix of that result,
-          not a claim of an undiscovered signal: tracking open-core companies
-          where the repo genuinely is the product, using longer forward
-          windows instead of next-day volatility, and reporting sample sizes
-          and correlation honestly rather than only when they look good. See{" "}
+          This project is a controlled replication and fix of that result,
+          not a claim of an undiscovered signal. It tracks open-core
+          companies where the repo genuinely is the product, uses longer
+          forward windows instead of next-day volatility, and reports sample
+          sizes and correlation honestly rather than only when they look
+          good. See{" "}
           <a
             href="https://github.com/McMuf/OSS-Pulse/blob/main/docs/spec.md"
             target="_blank"
@@ -67,10 +69,10 @@ export default function AboutPage() {
           Large-scale ingestion from the GitHub API and yfinance, a
           from-scratch scoring methodology with weights documented (not
           hardcoded in the frontend), a scheduled CI pipeline that keeps the
-          data current, a backend API, and a full-stack dashboard — with a
-          backtest this project is upfront about the limits of. No custom-
-          trained model; this is a prompt-free, plain data-engineering and
-          orchestration project.
+          data current, a backend API, and a full-stack dashboard. It
+          includes a backtest this project is upfront about the limits of.
+          There is no custom-trained model here; this is a plain
+          data-engineering and orchestration project.
         </p>
 
         <h2 className="mt-10 text-sm font-medium text-foreground-muted uppercase tracking-wide">

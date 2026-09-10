@@ -20,18 +20,18 @@ export function PriceScoreChart({ data }: { data: ChartPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid stroke="#23262c" vertical={false} />
+        <CartesianGrid stroke="#e2e5ea" vertical={false} />
         <XAxis
           dataKey="date"
-          tick={{ fill: "#8b8f98", fontSize: 11 }}
-          axisLine={{ stroke: "#23262c" }}
+          tick={{ fill: "#64707d", fontSize: 11 }}
+          axisLine={{ stroke: "#e2e5ea" }}
           tickLine={false}
           minTickGap={40}
         />
         <YAxis
           yAxisId="score"
           domain={[0, 100]}
-          tick={{ fill: "#8b8f98", fontSize: 11 }}
+          tick={{ fill: "#64707d", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           width={32}
@@ -39,7 +39,7 @@ export function PriceScoreChart({ data }: { data: ChartPoint[] }) {
         <YAxis
           yAxisId="price"
           orientation="right"
-          tick={{ fill: "#8b8f98", fontSize: 11 }}
+          tick={{ fill: "#64707d", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           width={48}
@@ -47,19 +47,19 @@ export function PriceScoreChart({ data }: { data: ChartPoint[] }) {
         />
         <Tooltip
           contentStyle={{
-            background: "#131519",
-            border: "1px solid #23262c",
-            borderRadius: 8,
+            background: "#ffffff",
+            border: "1px solid #e2e5ea",
+            borderRadius: 2,
             fontSize: 12,
           }}
-          labelStyle={{ color: "#e8e9ec" }}
+          labelStyle={{ color: "#14171c" }}
         />
         <Line
           yAxisId="score"
           type="monotone"
           dataKey="score"
           name="Commit-velocity score"
-          stroke="#3ecf8e"
+          stroke="#0f9d63"
           strokeWidth={2}
           dot={false}
           connectNulls
@@ -69,7 +69,7 @@ export function PriceScoreChart({ data }: { data: ChartPoint[] }) {
           type="monotone"
           dataKey="price"
           name="Stock price"
-          stroke="#8b8f98"
+          stroke="#64707d"
           strokeWidth={1.5}
           dot={false}
           connectNulls

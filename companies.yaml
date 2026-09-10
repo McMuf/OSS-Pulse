@@ -39,7 +39,7 @@ companies:
   - ticker: NET
     name: Cloudflare
     tier: 1
-    caveat: "Weaker single-repo mapping — several OSS tools, no single flagship product repo"
+    caveat: "Weaker single-repo mapping. Several OSS tools, no single flagship product repo"
     repos:
       - cloudflare/workerd
 

@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 /*
-  Always-dark theme (not tied to prefers-color-scheme) — the product's
-  visual identity is dark mode, styled after Mercury/Copilot Money/
-  Wealthsimple/Robinhood: near-black surfaces, muted borders, one
-  accent color reserved for score/trend emphasis.
+  Light, professional theme (Marble Investments / Yahoo Finance references) —
+  replaces the earlier dark Copilot Money/Mercury direction. Sharp-edged
+  cards (no heavy rounding) with thin borders, a little visual energy from
+  the animated market-line background rather than color alone.
 */
 :root {
-  --background: #0a0b0d;
-  --surface: #131519;
-  --surface-raised: #1b1e24;
-  --border: #23262c;
-  --foreground: #e8e9ec;
-  --foreground-muted: #8b8f98;
-  --accent: #3ecf8e;
-  --negative: #f2545b;
+  --background: #f7f8fa;
+  --surface: #ffffff;
+  --surface-raised: #f0f2f5;
+  --border: #e2e5ea;
+  --foreground: #14171c;
+  --foreground-muted: #64707d;
+  --accent: #0f9d63;
+  --negative: #d64545;
 }
 
 @theme inline {
@@ -26,16 +26,39 @@
   --color-foreground-muted: var(--foreground-muted);
   --color-accent: var(--accent);
   --color-negative: var(--negative);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta);
+  --font-mono: var(--font-plex-mono);
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* The contributor graph stays a dark "terminal" panel deliberately — it's
+   Obsidian's native look, and a dark widget inside a light dashboard reads
+   as an intentional contrast choice rather than a leftover. Scoping these
+   as local variable overrides means every bg-background/text-foreground/etc.
+   utility inside .graph-panel just works, no per-class rewrite needed. */
+.graph-panel {
+  --background: #0a0b0d;
+  --surface: #131519;
+  --surface-raised: #1b1e24;
+  --border: #23262c;
+  --foreground: #e8e9ec;
+  --foreground-muted: #8b8f98;
+}
+
+@keyframes market-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }

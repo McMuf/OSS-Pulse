@@ -6,20 +6,33 @@ layer yet (that's a later stage once traffic/cost is a real concern).
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from oss_pulse.config import Company, load_companies
-from oss_pulse.scoring.backtest import compute_backtest, compute_trend
+from oss_pulse.scoring.backtest import company_weekly_scores, compute_backtest, compute_trend
 from oss_pulse.scoring.composite import compute_company_score, compute_repo_scores
 from oss_pulse.scoring.methodology import get_methodology
 from oss_pulse.storage.db import get_connection
 
 app = FastAPI(title="OSS Pulse API")
 
+# CORS_ALLOWED_ORIGINS is a comma-separated list, e.g.
+# "http://localhost:3000,https://oss-pulse.vercel.app" for local dev plus
+# a deployed frontend. Defaults to localhost only so nothing needs to
+# change for local development.
+_default_origins = "http://localhost:3000"
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", _default_origins).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_methods=["GET"],
     allow_headers=["*"],
 )
@@ -46,6 +59,9 @@ def list_companies() -> list[dict]:
     try:
         repo_scores = compute_repo_scores(con, _all_repos(companies))
         trends = {c.ticker: compute_trend(con, c.repos) for c in companies}
+        recent_scores = {
+            c.ticker: [s for _, s in company_weekly_scores(con, c.repos)][-8:] for c in companies
+        }
     finally:
         con.close()
 
@@ -61,9 +77,46 @@ def list_companies() -> list[dict]:
             "score": compute_company_score([repo_scores[r] for r in c.repos if r in repo_scores]),
             "trend_direction": trends[c.ticker].direction if trends[c.ticker] else None,
             "trend_magnitude": trends[c.ticker].magnitude if trends[c.ticker] else None,
+            "recent_scores": recent_scores[c.ticker],
         }
         for c in companies
     ]
+
+
+@app.get("/prices")
+def list_prices() -> list[dict]:
+    """Real latest stock price + day-over-day change for the ticker strip —
+    separate from /companies since it's simple raw price data, not a
+    computed health score.
+    """
+    companies = [c for c in load_companies() if not c.delisted]
+    con = get_connection()
+    try:
+        result = []
+        for c in companies:
+            rows = con.execute(
+                "SELECT date, close FROM stock_price WHERE ticker = ? ORDER BY date DESC LIMIT 15",
+                [c.ticker],
+            ).fetchall()
+            if not rows:
+                continue
+            closes = [r[1] for r in reversed(rows)]
+            latest = closes[-1]
+            previous = closes[-2] if len(closes) >= 2 else None
+            change_pct = (latest - previous) / previous if previous else None
+            result.append(
+                {
+                    "ticker": c.ticker,
+                    "name": c.name,
+                    "price": latest,
+                    "change_pct": change_pct,
+                    "recent_prices": closes,
+                }
+            )
+    finally:
+        con.close()
+
+    return result
 
 
 @app.get("/companies/{ticker}")
