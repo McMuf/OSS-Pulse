@@ -1,11 +1,11 @@
 import { TickerStrip } from "@/components/TickerStrip";
-import { getApiBase } from "@/lib/apiUrl";
+import { getApiBaseServer } from "@/lib/apiUrl";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { PriceQuote } from "@/lib/types";
 
-async function getPrices(): Promise<PriceQuote[]> {
+async function getPrices(apiBase: string): Promise<PriceQuote[]> {
   try {
-    const res = await fetchWithTimeout(`${getApiBase()}/prices`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiBase}/prices`, { cache: "no-store" });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -14,10 +14,11 @@ async function getPrices(): Promise<PriceQuote[]> {
 }
 
 // A separate async component (rather than inline in the root layout) so it
-// can be wrapped in its own <Suspense> boundary — a slow/cold backend only
+// can be wrapped in its own <Suspense> boundary - a slow/cold backend only
 // delays the ticker strip, not the entire page shell (nav, disclaimer).
 export async function TickerStripLoader() {
-  const prices = await getPrices();
+  const apiBase = await getApiBaseServer();
+  const prices = await getPrices(apiBase);
   return <TickerStrip quotes={prices} />;
 }
 

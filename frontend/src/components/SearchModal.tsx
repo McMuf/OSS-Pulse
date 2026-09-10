@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { getApiBase } from "@/lib/apiUrl";
+import { getApiBaseClient } from "@/lib/apiUrl";
 import { tickerHue } from "@/lib/color";
 import type { CompanySummary } from "@/lib/types";
 
@@ -43,7 +43,7 @@ export function SearchModalProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isOpen || companies !== null) return;
-    fetch(`${getApiBase()}/companies`, { cache: "no-store" })
+    fetch(`${getApiBaseClient()}/companies`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setCompanies(data))
       .catch(() => setCompanies([]));

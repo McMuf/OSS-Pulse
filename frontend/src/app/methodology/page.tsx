@@ -1,10 +1,10 @@
-import { getApiBase } from "@/lib/apiUrl";
+import { getApiBaseServer } from "@/lib/apiUrl";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { LAG_WINDOW_LABELS, Methodology } from "@/lib/types";
 
-async function getMethodology(): Promise<Methodology | null> {
+async function getMethodology(apiBase: string): Promise<Methodology | null> {
   try {
-    const res = await fetchWithTimeout(`${getApiBase()}/methodology`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiBase}/methodology`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -13,7 +13,8 @@ async function getMethodology(): Promise<Methodology | null> {
 }
 
 export default async function MethodologyPage() {
-  const methodology = await getMethodology();
+  const apiBase = await getApiBaseServer();
+  const methodology = await getMethodology(apiBase);
 
   return (
     <div className="flex flex-col flex-1">
@@ -32,7 +33,7 @@ export default async function MethodologyPage() {
         {methodology === null && (
           <div className="mt-6 rounded-sm border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
             Couldn&apos;t reach the backend at{" "}
-            <code className="font-mono">{getApiBase()}</code>
+            <code className="font-mono">{apiBase}</code>
             .
           </div>
         )}

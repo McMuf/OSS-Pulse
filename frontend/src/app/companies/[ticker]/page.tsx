@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContributorGraph } from "@/components/ContributorGraph";
 import { PriceScoreChart } from "@/components/PriceScoreChart";
-import { getApiBase } from "@/lib/apiUrl";
+import { getApiBaseServer } from "@/lib/apiUrl";
 import { tickerHue } from "@/lib/color";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import {
@@ -15,9 +15,12 @@ import {
   pendingReason,
 } from "@/lib/types";
 
-async function getCompany(ticker: string): Promise<CompanyDetail | null | "unreachable"> {
+async function getCompany(
+  apiBase: string,
+  ticker: string
+): Promise<CompanyDetail | null | "unreachable"> {
   try {
-    const res = await fetchWithTimeout(`${getApiBase()}/companies/${ticker}`, {
+    const res = await fetchWithTimeout(`${apiBase}/companies/${ticker}`, {
       cache: "no-store",
     });
     if (res.status === 404) return null;
@@ -28,9 +31,12 @@ async function getCompany(ticker: string): Promise<CompanyDetail | null | "unrea
   }
 }
 
-async function getContributorGraph(ticker: string): Promise<ContributorGraphData | null> {
+async function getContributorGraph(
+  apiBase: string,
+  ticker: string
+): Promise<ContributorGraphData | null> {
   try {
-    const res = await fetchWithTimeout(`${getApiBase()}/companies/${ticker}/contributors`, {
+    const res = await fetchWithTimeout(`${apiBase}/companies/${ticker}/contributors`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -40,9 +46,9 @@ async function getContributorGraph(ticker: string): Promise<ContributorGraphData
   }
 }
 
-async function getBacktest(ticker: string): Promise<BacktestResult | null> {
+async function getBacktest(apiBase: string, ticker: string): Promise<BacktestResult | null> {
   try {
-    const res = await fetchWithTimeout(`${getApiBase()}/companies/${ticker}/backtest`, {
+    const res = await fetchWithTimeout(`${apiBase}/companies/${ticker}/backtest`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -189,10 +195,11 @@ export default async function CompanyPage({
 }) {
   const { ticker } = await params;
   const upperTicker = ticker.toUpperCase();
+  const apiBase = await getApiBaseServer();
   const [company, backtest, contributorGraph] = await Promise.all([
-    getCompany(upperTicker),
-    getBacktest(upperTicker),
-    getContributorGraph(upperTicker),
+    getCompany(apiBase, upperTicker),
+    getBacktest(apiBase, upperTicker),
+    getContributorGraph(apiBase, upperTicker),
   ]);
 
   if (company === null) notFound();
@@ -210,7 +217,7 @@ export default async function CompanyPage({
         {company === "unreachable" && (
           <div className="mt-6 rounded-sm border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
             Couldn&apos;t reach the backend at{" "}
-            <code className="font-mono">{getApiBase()}</code>
+            <code className="font-mono">{apiBase}</code>
             .
           </div>
         )}

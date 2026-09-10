@@ -1,12 +1,12 @@
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Leaderboard } from "@/components/Leaderboard";
-import { getApiBase } from "@/lib/apiUrl";
+import { getApiBaseServer } from "@/lib/apiUrl";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import type { CompanySummary } from "@/lib/types";
 
-async function getCompanies(): Promise<CompanySummary[] | null> {
+async function getCompanies(apiBase: string): Promise<CompanySummary[] | null> {
   try {
-    const res = await fetchWithTimeout(`${getApiBase()}/companies`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${apiBase}/companies`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -15,7 +15,8 @@ async function getCompanies(): Promise<CompanySummary[] | null> {
 }
 
 export default async function Home() {
-  const companies = await getCompanies();
+  const apiBase = await getApiBaseServer();
+  const companies = await getCompanies(apiBase);
 
   return (
     <div className="flex flex-col flex-1">
@@ -31,7 +32,7 @@ export default async function Home() {
         {companies === null && (
           <div className="mt-10 rounded-sm border border-border bg-surface px-5 py-6 text-foreground-muted text-sm">
             Couldn&apos;t reach the backend at{" "}
-            <code className="font-mono">{getApiBase()}</code>
+            <code className="font-mono">{apiBase}</code>
             . Start it with{" "}
             <code className="font-mono">uvicorn oss_pulse.api.main:app</code>{" "}
             from <code className="font-mono">backend/</code>.
